@@ -33,7 +33,8 @@ class Server
     	var ec = new EntityCreator(em);
     	this.net = em.net;
     	net.server("192.168.1.4", 32000);
-    	net.socket.onConnection = onConnection;
+        net.socket.onConnection = onConnection;
+    	net.socket.onDisconnection = onDisconnection;
     	em.addSystem(new MovementSystem());
 
         // DEBUG
@@ -55,12 +56,19 @@ class Server
     	// var entity = net.createEntity();
      //    net.addComponent(entity, new CText("how"));
 
-        net.create("player", {x:200, y:200});
+        // net.create("player", {x:200, y:200});
         var newPlayer = net.create("player", {x:400, y:400});
         net.attachConnection(connection, newPlayer);
-        // net.sendWorldStateTo(connection, newPlayer);
+        net.sendWorldStateTo(connection, newPlayer);
         // net.destroyEntity(lel);
 	}
+
+    function onDisconnection(conn:Connection)
+    {
+        trace("onDisconnection");
+        var attachedEntity = net.entitiesByConnection.get(conn);
+        net.destroyEntity(attachedEntity);
+    }
 
     static function main() {new Server();}
 }

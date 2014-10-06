@@ -216,7 +216,6 @@ class EntityManager
     inline function removeComp(entity:Entity, componentId:Int)
     {
         entity.code = entity.code & ~(1 << componentId);
-        entity.components[componentId] = null;
 
         for(system in systems)
         {
@@ -226,11 +225,13 @@ class EntityManager
                 if( (entity.registeredSystemsCode & idCode) != idCode)
                     continue;
 
-                system.entities.remove(entity);
                 system.onEntityRemoved(entity);
+                system.entities.remove(entity);
                 entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << system._id);
             }
         }
+        
+        entity.components[componentId] = null;
     }
 
     public function getComponent<T>(entity:Entity, componentType:Class<T>):T
@@ -355,7 +356,7 @@ class NetEntityManager extends Net
 
     //////////////// SERVER //////////////
     #if server
-    var entitiesByConnection:Map<Connection, Entity> = new Map();
+    public var entitiesByConnection:Map<Connection, Entity> = new Map();
     public var connections:Map<Entity, Connection> = new Map(); // Todo : Refactor, make a Connection!?
 
     public function attachConnection(connection:anette.Connection, entity:Entity)

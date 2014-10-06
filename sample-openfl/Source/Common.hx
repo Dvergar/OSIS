@@ -18,10 +18,10 @@ class CText extends Component
 
 class CPosition extends Component
 {
-    @short public var x:Int;
-    @short public var y:Int;
+    @short public var x:Float;
+    @short public var y:Float;
 
-    public function new(x:Int, y:Int)
+    public function new(x:Float, y:Float)
     {
         this.x = x;
         this.y = y;
@@ -38,8 +38,7 @@ class MovementSystem extends System
 
     public override function processEntities(entity:Entity)
     {
-        var pos = entity.get(CPosition);
-        pos.x += 1;
+        entity.get(CPosition).x += 0.1;
     }
 }
 
