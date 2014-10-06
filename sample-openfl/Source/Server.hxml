@@ -1,0 +1,13 @@
+# -cmd "haxelib run protohx generate protohx.json"
+
+-main Server.hx
+-neko "D:\prog\#BUILDS\ecs.n"
+-cp ../../src
+-cp src-gen
+-D server
+-lib anette
+-lib protohx
+-lib hxserializer
+-debug
+
+-cmd "neko D:\prog\#BUILDS\ecs.n"

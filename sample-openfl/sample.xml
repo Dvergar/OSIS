@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+    
+    <app main="Client" path="Export" file="Client" />
+    <source path="Source" />
+    <source path="./../src" />
+    <haxelib name="openfl" />
+    <haxelib name="anette" />
+    <haxelib name="hxserializer" />
+    <haxedef name="client" />
+    <assets path="Assets" rename="assets" exclude="openfl.svg" />
+    <icon path="Assets/openfl.svg" />
+</project>
