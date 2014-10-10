@@ -26,12 +26,14 @@ class LelSystem extends System
 class Server
 {
 	var net:NetEntityManager;
+    var em:EntityManager;
+    var ec:EntityCreator;
 
     public function new()
     {
-    	var em = new EntityManager();
-    	var ec = new EntityCreator(em);
-    	this.net = em.net;
+    	em = new EntityManager();
+    	ec = new EntityCreator(em);
+    	net = em.net;
     	net.server("192.168.1.4", 32000);
         net.socket.onConnection = onConnection;
     	net.socket.onDisconnection = onDisconnection;
@@ -52,22 +54,18 @@ class Server
 
 	function onConnection(connection:Connection)
 	{
-		trace("connectionplop");
-    	// var entity = net.createEntity();
-     //    net.addComponent(entity, new CText("how"));
+		trace("onConnection");
 
-        // net.create("player", {x:200, y:200});
-        var newPlayer = net.create("player", {x:400, y:400});
-        net.attachConnection(connection, newPlayer);
-        net.sendWorldStateTo(connection, newPlayer);
-        // net.destroyEntity(lel);
+        var datPlayer = net.create("player", {x:400, y:400});
+        net.bindEntity(connection, datPlayer);
+        net.sendWorldStateTo(connection, datPlayer);
 	}
 
     function onDisconnection(conn:Connection)
     {
         trace("onDisconnection");
-        var attachedEntity = net.entitiesByConnection.get(conn);
-        net.destroyEntity(attachedEntity);
+        var boundEntity = net.getBoundEntity(conn);
+        net.destroyEntity(boundEntity);
     }
 
     static function main() {new Server();}

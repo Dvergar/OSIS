@@ -328,18 +328,17 @@ class NetEntityManager extends Net
     var entities:Map<Int, Entity> = new Map();
     var componentTypes:Array<Class<Component>> = new Array();
     var templates:Array<Dynamic->Entity> = new Array();
-    var templatesMap:Map<String, Int> = new Map();
-    var templatesMap2:Map<Int, String> = new Map(); // Wooh naming
+    var templatesByString:Map<String, Int> = new Map();
     var templatesIds:Int = 0;
     var syncComponents:Array<Component> = new Array();
-    var eventListeners:Map<String, Dynamic->Void> = new Map();
+    // var eventListeners:Map<String, Dynamic->Void> = new Map();
 
     static inline var CREATE_ENTITY = 0;
     static inline var CREATE_TEMPLATE_ENTITY = 1;
     static inline var ADD_COMPONENT = 2;
     static inline var UPDATE_COMPONENT = 3;
     static inline var DESTROY_ENTITY = 4;
-    static inline var EVENT = 5;
+    // static inline var EVENT = 5;
 
     public function new(em:EntityManager)
     {
@@ -357,22 +356,28 @@ class NetEntityManager extends Net
     //////////////// SERVER //////////////
     #if server
     public var entitiesByConnection:Map<Connection, Entity> = new Map();
-    public var connections:Map<Entity, Connection> = new Map(); // Todo : Refactor, make a Connection!?
+    // public var connections:Map<Entity, Connection> = new Map(); // Todo : Refactor, make a Connection!?
 
-    public function attachConnection(connection:anette.Connection, entity:Entity)
+    // USED WHEN DISCONNECTED FOR ENTITY DESTROY
+    public function bindEntity(connection:anette.Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
-        connections.set(entity, connection);
+        // connections.set(entity, connection);
     }
 
-    public function create(name:String, args:Dynamic, ?triggerEvent:Bool = false)
+    public function getBoundEntity(connection:anette.Connection)
     {
-        var templateId = templatesMap.get(name);
+        return entitiesByConnection.get(connection);
+    }
+
+    // TEMPLATES NEEDED: for remote entities with different components between c/s
+    public function create(name:String, args:Dynamic)
+    {
+        var templateId = templatesByString.get(name);
         if(templateId == null) throw "This entity type hasn't been registered";
         var entity = templates[templateId](args);
         entity.templateId = templateId;
         entity.args = args;
-        entity.triggerEvent = triggerEvent;
 
         // SEND
         for(connection in socket.connections)
@@ -383,9 +388,6 @@ class NetEntityManager extends Net
         for(component in entity.components)
             if(component != null)
                 if(component.sync) syncComponents.push(component);
-
-        trace("send entity id " + entity.id);
-        trace("send entity templateid " + entity.templateId);
 
         return entity;
     }
@@ -398,9 +400,6 @@ class NetEntityManager extends Net
         var argsSerialized = haxe.Serializer.run(entity.args);
         output.writeInt16(argsSerialized.length);
         output.writeString(argsSerialized);
-        (entity.triggerEvent == true) ?
-            output.writeInt8(1):
-            output.writeInt8(0);
     }
 
     public function createEntity()
@@ -438,38 +437,32 @@ class NetEntityManager extends Net
         entities.remove(entity.id);
     }
 
-    public function addComponent<T:CompTP>(entity:Entity, component:T,
-                                              ?ignoreEntity:Bool=false):T
+    public function addComponent<T:CompTP>(entity:Entity, component:T):T
     {
         for(connection in socket.connections)
         {
-            if(ignoreEntity)
-            {
-                var connEntity = entitiesByConnection.get(connection);
-                if(connEntity == entity) continue;
-            }
-
             connection.output.writeInt8(ADD_COMPONENT);
             connection.output.writeInt16(entity.id);
             connection.output.writeInt8(component._sid);
             component.serialize(connection.output);
         }
+        if(component.sync) syncComponents.push(cast component);
         em.addComponent(entity, component);
         return cast component;
     }
 
-    override function onData(connection:Connection)
-    {
-        while(connection.input.mark - connection.input.position > 0)
-        {
-            var msgtype = connection.input.readInt8();
-            switch(msgtype)
-            {
-                case EVENT:
-                    receiveEvent(connection);
-            }
-        }
-    }
+    // override function onData(connection:Connection)
+    // {
+    //     while(connection.input.mark - connection.input.position > 0)
+    //     {
+    //         var msgtype = connection.input.readInt8();
+    //         switch(msgtype)
+    //         {
+    //             case EVENT:
+    //                 receiveEvent(connection);
+    //         }
+    //     }
+    // }
 
     public function sendWorldStateTo(connection:Connection, player:Entity)
     {
@@ -525,84 +518,71 @@ class NetEntityManager extends Net
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
-                    trace("CREATE_TEMPLATE_ENTITY id " + entityId);
                     var templateId = connection.input.readInt8();
-                    trace("CREATE_TEMPLATE_ENTITY templateid " + templateId);
                     var argsLength = connection.input.readInt16();
                     var argsSerialized = connection.input.readString(argsLength);
-                    var triggerEvent = if(connection.input.readInt8() == 0)
-                                            false else true;
                     var args = haxe.Unserializer.run(argsSerialized);
                     var entity = templates[templateId](args);
                     entities.set(entityId, entity);
 
-                    if(triggerEvent)
-                    {
-                        var eventName = templatesMap2.get(templateId).toUpperCase();
-                        var func = eventListeners.get("CREATE_" + eventName);
-                        if(func == null) throw "Not listener for event : Entity creation";
-                        func({entity:entity});
-                    }
-
-                case EVENT:
-                    receiveEvent(connection);
+                // case EVENT:
+                //     receiveEvent(connection);
             }
         }
     }
     #end
 
-    function receiveEvent(connection:Connection)
-    {
-        // trace("EVENT");
-        var eventLength = connection.input.readInt8();
-        var eventName = connection.input.readString(eventLength);
-        var msgLength = connection.input.readInt16();
-        var msgSerialized = connection.input.readString(msgLength);
-        var msg:Dynamic = haxe.Unserializer.run(msgSerialized);
+    // function receiveEvent(connection:Connection)
+    // {
+    //     // trace("EVENT");
+    //     var eventLength = connection.input.readInt8();
+    //     var eventName = connection.input.readString(eventLength);
+    //     var msgLength = connection.input.readInt16();
+    //     var msgSerialized = connection.input.readString(msgLength);
+    //     var msg:Dynamic = haxe.Unserializer.run(msgSerialized);
 
-        #if server msg.entity = entitiesByConnection.get(connection); #end
-        var func = eventListeners.get(eventName);
-        if(func == null) throw "Not listener for event : " + eventName;
-        func(msg);
-    }
+    //     #if server msg.entity = entitiesByConnection.get(connection); #end
+    //     var func = eventListeners.get(eventName);
+    //     if(func == null) throw "Not listener for event : " + eventName;
+    //     func(msg);
+    // }
 
-    public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
-    {
-        #if server
-        if(connection != null)
-            _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-        else
-            for(connection in socket.connections)
-                _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-        #end
-        #if client
-            _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
-        #end
-    }
+    // public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
+    // {
+    //     #if server
+    //     if(connection != null)
+    //         _sendEvent(connection.output, haxe.Serializer.run(msg), name);
+    //     else
+    //         for(connection in socket.connections)
+    //             _sendEvent(connection.output, haxe.Serializer.run(msg), name);
+    //     #end
+    //     #if client
+    //         _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
+    //     #end
+    // }
 
-    inline function _sendEvent(output:haxe.io.BytesOutput, serializedMsg:String,
-                                                                    name:String)
-    {
-        output.writeInt8(EVENT);
-        output.writeInt8(name.length);
-        output.writeString(name);
+    // inline function _sendEvent(output:haxe.io.BytesOutput, serializedMsg:String,
+    //                                                                 name:String)
+    // {
+    //     output.writeInt8(EVENT);
+    //     output.writeInt8(name.length);
+    //     output.writeString(name);
         
-        output.writeInt16(serializedMsg.length);
-        output.writeString(serializedMsg);
-    }
+    //     output.writeInt16(serializedMsg.length);
+    //     output.writeString(serializedMsg);
+    // }
 
     public function registerTemplate(name:String, func:Dynamic->Entity)
     {
         var id = templatesIds++;
         templates[id] = func;
-        templatesMap.set(name, id);
-        templatesMap2.set(id, name);
+        templatesByString.set(name, id);
     }
 
-    public function registerEvent(name:String, func:Dynamic)
-    {
-        eventListeners.set(name, func);
-    }
+    // public function registerEvent(name:String, func:Dynamic)
+    // {
+    //     eventListeners.set(name, func);
+    // }
 
     public function pump()
     {
