@@ -4,7 +4,191 @@ import haxe.macro.Context;
 import anette.*;
 import anette.Protocol;
 import anette.Bytes;
+import de.polygonal.ds.LinkedQueue;
+import de.polygonal.ds.ListSet;
 
+
+enum Mod
+{
+    REMOVE;
+    MOD;
+}
+
+
+class Change
+{
+    public var entityId:Int;
+    public var component:Component;
+    public var type:Mod;
+
+    public function new(entityId:Int, component:Component, type:Mod)
+    {
+        this.entityId = entityId;
+        this.component = component;
+        this.type = type;
+    }
+}
+
+
+class EntitySet
+{
+    static var ids:Int = 0;
+    public var code:Int = 0;
+    public var entities:Map<Int, Entity2> = new Map();
+    public var changes:LinkedQueue<Change> = new LinkedQueue();
+    public var ed:EntityData;
+    public var addedEntities:ListSet<Entity2> = new ListSet();
+    public var changedEntities:ListSet<Entity2> = new ListSet();
+    public var removedEntities:ListSet<Entity2> = new ListSet();
+
+    public function new(ed:EntityData)
+    {
+        code = ids++;
+        this.ed = ed;
+    }
+
+    public function applyChanges():Bool
+    {
+        addedEntities.clear();
+        changedEntities.clear();
+        removedEntities.clear();
+
+        var changed = false;
+        if(changes.size() > 0) changed = true;
+
+        for(change in changes)
+        {
+            var entity = entities.get(change.entityId);
+            if(entity == null)
+            {
+                var component = cast change.component;
+                entity = new Entity2(ed, change.entityId);
+                entity.code = entity.code | (1 << component._id);
+                entities.set(entity.id, entity);
+                addedEntities.set(entity);
+            }
+
+            if( (code & entity.code) == code )
+            {
+                var component = cast change.component;
+                switch(change.type)
+                {
+                    case Mod.MOD:
+                        changedEntities.set(entity);
+                        entity.components[component._id] = change.component;
+                    case Mod.REMOVE:
+                        removedEntities.set(entity);
+                        entities.remove(entity.id);
+                }
+            }
+        }
+
+        changes.clear();
+
+        return changed;
+    }
+}
+
+
+class EntityData
+{
+    static var entityIds:Int = 0;
+    var entitySets:Array<EntitySet> = new Array();
+
+    public function new() {}
+
+    public function createEntity()
+    {
+        return new Entity2(this, entityIds++);
+    }
+
+    public function getEntities(componentClassList:Array<Class<Component>>)
+    {
+        var entitySet = new EntitySet(this);
+
+        // Move into EntitySet?
+        for(componentClass in componentClassList)
+        {
+            var cclass = cast componentClass;
+            entitySet.code = entitySet.code | (1 << (cclass.__id));
+        }
+
+        entitySets.push(entitySet);
+
+        return entitySet;
+    }
+
+    public function setComponent<T:{var _id:Int;}>(entity:Entity2, component:T):T
+    {
+        var change = new Change(entity.id, cast component, Mod.MOD);
+
+        for(set in entitySets)
+        {
+            set.changes.enqueue(change);
+        }
+
+        return component;
+    }
+}
+
+
+typedef Component2 = {> Component,
+                      // public var __id:Int;
+                      public var _id:Int;};
+
+
+class Entity2
+{
+    public var code:Int = 0;
+    public var id:Int;
+    public var components:Array<Component> = new Array();
+    public var registeredSystemsCode:Int = 0;
+    public var ed:EntityData;
+
+    public function new(ed:EntityData, id:Int)
+    {
+        this.ed = ed;
+        this.id = id;
+        trace("ENTITY ID " + id);
+    }
+
+    public function get<T:Component>(componentClass:Class<T>):T
+    {
+        // var cclass = cast componentClass;
+        var comp:T = cast components[(cast componentClass).__id];
+        if(comp == null) throw "Entity " + id + " doesn't have component " + componentClass;
+        return comp;
+    }
+
+    public function set<T:{_id:Int}, U:{__id:Int}>(component:T):T
+    {
+        var componentClass:U = cast Type.getClass(component);
+        if(has(componentClass))
+        {
+            components[componentClass.__id] = cast component;
+        }
+
+        ed.setComponent(this, component);
+
+        return component;
+    }
+
+    public function has<T:{__id:Int}>(componentClass:T):Bool
+    {
+        // var ctype = cast componentType;
+        // var comp = cast components[ctype.__id];
+        if(components[componentClass.__id] == null) return false;
+        return true;
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 class IdAssign
 {
@@ -32,6 +216,7 @@ class IdAssign
 }
 
 
+// Removed _id & __id _sid & __sid are generated from hxserializer
 typedef CompTP = {public var _sid:Int;
                   public var _id:Int;
                   public var sync:Bool;
@@ -181,6 +366,7 @@ class EntityManager
             component.sync = sync;
             component.netOwner = entity.id;
         }
+
         entity.components[component._id] = cast component;
         entity.code = entity.code | (1 << component._id);
 
@@ -356,13 +542,11 @@ class NetEntityManager extends Net
     //////////////// SERVER //////////////
     #if server
     public var entitiesByConnection:Map<Connection, Entity> = new Map();
-    // public var connections:Map<Entity, Connection> = new Map(); // Todo : Refactor, make a Connection!?
 
     // USED WHEN DISCONNECTED FOR ENTITY DESTROY
     public function bindEntity(connection:anette.Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
-        // connections.set(entity, connection);
     }
 
     public function getBoundEntity(connection:anette.Connection)
@@ -370,7 +554,7 @@ class NetEntityManager extends Net
         return entitiesByConnection.get(connection);
     }
 
-    // TEMPLATES NEEDED: for remote entities with different components between c/s
+    // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
     public function create(name:String, args:Dynamic)
     {
         var templateId = templatesByString.get(name);

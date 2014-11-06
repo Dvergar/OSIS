@@ -50,8 +50,8 @@ class Server
     			em.processSystem(MovementSystem);
 			});
     	}
-	}
-
+	
+}
 	function onConnection(connection:Connection)
 	{
 		trace("onConnection");

@@ -1,0 +1,67 @@
+message CInput
+{
+    required bool key_up = 1;
+    required bool key_down = 2;
+    required bool key_left = 3;
+    required bool key_right = 4;
+}
+
+message CPosition
+{
+    required int32 x = 1;
+    required int32 y = 2;
+    //optional int32 rotation = 3;
+    //optional int32 dx = 4 [default = 0];
+    //optional int32 dy = 5 [default = 0];
+}
+
+message CSpeed
+{
+    required int32 value = 1 [default = 5];
+}
+
+message CDrawable
+{
+    optional string image_name = 1;
+    optional int32 width = 2;
+    optional int32 height = 3;
+    optional int32 color = 4;
+    optional int32 anchorx = 5;
+    optional int32 anchory = 6;
+    required Type type = 9;
+
+    enum Type
+    {
+        RECTANGLE = 1;
+        IMAGE = 2;
+    }
+}
+
+message CTargetPosition
+{
+    required int32 x = 1;
+    required int32 y = 2;
+    required int32 step = 3;
+    optional int32 startx = 4;
+    optional int32 starty = 5;
+    optional int32 percent = 6;
+}
+
+
+message CPhaserFollowMouse {}
+message CCollidable
+{
+    optional bool immovable = 1 [default = false];
+}
+message CShip {}
+
+// NETWORK EVENTS
+
+message INPUT
+{
+    required bool key_up = 1;
+    required bool key_down = 2;
+    required bool key_left = 3;
+    required bool key_right = 4;
+    required int32 entity_id = 5;
+}

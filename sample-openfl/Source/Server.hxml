@@ -8,6 +8,7 @@
 -lib anette
 -lib protohx
 -lib hxserializer
+-lib polygonal-ds
 -debug
 
 -cmd "neko D:\prog\#BUILDS\ecs.n"
