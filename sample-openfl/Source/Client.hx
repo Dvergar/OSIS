@@ -137,6 +137,7 @@ class DrawableSystem
 
             for(entity in entities.changedEntities)
             {
+                trace("change");
                 var pos = entity.get(CPosition);
                 var sprite = sprites.get(entity.id);
                 sprite.x = pos.x;
@@ -205,7 +206,6 @@ class InputSystem
 
         for(entity in entities.entities)
         {
-
             var pos = entity.get(CPosition);
             var newpos = new CPosition(pos.x, pos.y);
 
@@ -213,12 +213,12 @@ class InputSystem
             if(right) newpos.x += 5;
             if(up) newpos.y -= 5;
             if(down) newpos.y += 5;
+            // trace("wot " + newpos.x);
 
             entity.set(newpos);
         }
     }
 }
-
 
 
 class Client
@@ -229,14 +229,14 @@ class Client
     public function new()
     {
         var ed = new EntityData();
+        var entity = ed.createEntity();
+        entity.set(new CDrawable("idassignation.PNG"));
 
         drawableSystem = new DrawableSystem(ed);
         trace("inputsystem");
         inputSystem = new InputSystem(ed);
 
-        var entity = ed.createEntity();
         entity.set(new CPosition(200, 300));
-        entity.set(new CDrawable("idassignation.PNG"));
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
@@ -245,5 +245,7 @@ class Client
     {
         drawableSystem.update();
         inputSystem.update();
+
+        // throw("lel");
     }
 }

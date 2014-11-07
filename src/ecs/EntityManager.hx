@@ -34,6 +34,7 @@ class EntitySet
 {
     static var ids:Int = 0;
     public var code:Int = 0;
+    public var componentTypes:Array<Int> = new Array(); // Used for completing entities
     public var entities:Map<Int, Entity2> = new Map();
     public var changes:LinkedQueue<Change> = new LinkedQueue();
     public var ed:EntityData;
@@ -58,32 +59,35 @@ class EntitySet
 
         for(change in changes)
         {
+            trace("--------------------------------------------");
             var component = cast change.component;
 
             // FILTER OUT NON INTERESTING COMPONENTS
-            // trace("set code " + cast(code).toString(2));
-            // trace("comp code " + cast(1 <<  component._id).toString(2));
-            // trace("filter code " + cast(code & (1 << component._id)).toString(2));
+            trace("set code " + cast(code).toString(2));
+            trace("comp code " + cast(1 <<  component._id).toString(2));
+            trace("filter code " + cast(code & (1 << component._id)).toString(2));
+            // trace("wooot " + ((code & (1 << component._id)) == 0));
             if( (code & (1 << component._id)) == 0 ) continue;
 
             var entity = entities.get(change.entityId);
-
             // MAKE ENTITY IF DOESN'T EXISTS
             if(entity == null)
             {
                 entity = new Entity2(ed, change.entityId);
-                // trace("temp entity made");
+                trace("temp entity made");
                 entities.set(entity.id, entity);
                 addedEntities.set(entity);
             }
 
+            // FILL BUILDING ENTITY
             if( (entity.code & (1 << component._id)) == 0)
             {
                 entity.code = entity.code | (1 << component._id);
                 entity.components[component._id] = change.component;
-                // trace("entity not fully built " + cast(entity.code).toString(2));
+                trace("entity not fully built " + cast(entity.code).toString(2));
             }
 
+            trace("entitycode " + cast(entity.code).toString(2));
             // MODS AND DELETE
             if(entity.code == code)
             {
@@ -91,6 +95,7 @@ class EntitySet
                 switch(change.type)
                 {
                     case Mod.MOD:
+                        trace("mod " + cast(code).toString(2));
                         changedEntities.set(entity);
                         entity.components[component._id] = change.component;
                     case Mod.REMOVE:
@@ -103,11 +108,32 @@ class EntitySet
         // ADDING INTERESTING ENTITIES
         for(entity in addedEntities)
         {
-            // trace("adding entities " + cast(entity.code).toString(2));
+            trace("adding entities " + cast(entity.code).toString(2));
+
+            // ENTITY DOESN'T MATCH WITH WHAT WE HAVE
             if(entity.code != code)
             {
-                addedEntities.remove(entity);
-                entities.remove(entity.id);
+                trace("throwaway entity");
+                var globalEntity = ed.entities.get(entity.id);
+                trace("globalEntity code " + cast(globalEntity.code).toString(2));
+
+                // BUT MATCHES THE GLOBAL ENTITY
+                if( (globalEntity.code & code) == code)
+                {
+                    trace("globalEntity matches");
+                    for(componentType in componentTypes)
+                    {
+                        entity.code = entity.code | (1 << componentType);
+                        entity.components[componentType] = globalEntity.components[componentType];
+                    }
+                }
+                // OTHERWISE THROWAWAY ENTITY
+                else
+                {
+                    trace("no really, throwaway");
+                    addedEntities.remove(entity);
+                    entities.remove(entity.id);
+                }
             }
         }
 
@@ -122,12 +148,15 @@ class EntityData
 {
     static var entityIds:Int = 0;
     var entitySets:Array<EntitySet> = new Array();
+    public var entities:Map<Int, Entity2> = new Map();
 
     public function new() {}
 
     public function createEntity()
     {
-        return new Entity2(this, entityIds++);
+        var newEntityId = entityIds++;
+        entities.set(newEntityId, new Entity2(this, newEntityId));
+        return new Entity2(this, newEntityId);
     }
 
     public function getEntities(componentClassList:Array<Class<Component>>)
@@ -141,6 +170,7 @@ class EntityData
             entitySet.code = entitySet.code | (1 << (cclass.__id));
             trace("updating entityset " + cast(entitySet.code).toString(2));
             trace("componentClass " + componentClass);
+            entitySet.componentTypes.push(cclass.__id);
         }
         trace("entityset code " + cast(entitySet.code).toString(2));
 
@@ -151,12 +181,20 @@ class EntityData
 
     public function setComponent<T:{var _id:Int;}>(entity:Entity2, component:T):T
     {
+        // UPDATE GLOBAL ENTITY
+        var gentity = entities.get(entity.id);
+        gentity.components[cast(component)._id] = cast component;
+        gentity.code = gentity.code | (1 << cast(component)._id);
+
+        // DISPATCH CHANGE
         var change = new Change(entity.id, cast component, Mod.MOD);
 
         for(set in entitySets)
         {
+            trace("change in " + set.code);
             set.changes.enqueue(change);
         }
+
 
         return component;
     }
