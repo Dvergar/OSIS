@@ -25,41 +25,113 @@ class CDrawable extends Component
 }
 
 
-class DrawableSystem extends System
+// class DrawableSystem extends System
+// {
+//     var sprites:Map<Int, Sprite> = new Map();
+
+//     public function new()
+//     {
+//         need([CDrawable, CPosition]);
+//     }
+
+//     public override function onEntityAdded(entity:Entity)
+//     {
+//         var drawable = entity.get(CDrawable);
+//         var sprite = getSprite(drawable.imageName);
+//         Lib.current.addChild(sprite);
+//         sprites.set(entity.id, sprite);
+//     }
+
+//     public override function onEntityRemoved(entity:Entity)
+//     {
+//         var drawable = entity.get(CDrawable);
+
+//         trace("entityid " + entity.id);
+//         trace("spritse " + sprites);
+//         var sprite = sprites.get(entity.id);
+//         Lib.current.removeChild(sprite);
+//         sprites.remove(entity.id);
+//     }
+
+//     public override function processEntities(entity:Entity)
+//     {
+//         var pos = entity.get(CPosition);
+//         var sprite = sprites.get(entity.id);
+
+//         sprite.x = pos.x;
+//         sprite.y = pos.y;
+//     }
+
+//     public inline static function getBitmap(imageName:String)
+//     {
+//         var bitmapData = Assets.getBitmapData("assets/" + imageName);
+//         return new Bitmap(bitmapData);
+//     }
+
+//     public inline static function getSprite(imageName:String, ?centered:Bool)
+//     {
+//         var bitmap = DrawableSystem.getBitmap(imageName);
+//         if(centered)
+//         {
+//             bitmap.x -= bitmap.width / 2;
+//             bitmap.y -= bitmap.height / 2;
+//         }
+//         var sprite = new Sprite();
+//         sprite.addChild(bitmap);
+//         return sprite;
+//     }
+// }
+
+
+// class Client
+// {
+//     var em:EntityManager = new EntityManager();
+
+//     public function new()
+//     {
+//         var ec = new EntityCreator(em);
+//         var net = em.net;
+//         net.connect("192.168.1.4", 32000);
+//         em.addSystem(new DrawableSystem());
+
+//         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
+//     }
+
+//     function loop(event:Event)
+//     {
+//         em.fixedUpdate(function()
+//         {
+//             em.processSystem(DrawableSystem);
+//         });
+//     }
+// }
+
+class DrawableSystem
 {
     var sprites:Map<Int, Sprite> = new Map();
+    var entities:EntitySet;
 
-    public function new()
+    public function new(ed:EntityData)
     {
-        need([CDrawable, CPosition]);
+        entities = ed.getEntities([CPosition, CDrawable]);
     }
 
-    public override function onEntityAdded(entity:Entity)
+    public function update()
     {
-        var drawable = entity.get(CDrawable);
-        var sprite = getSprite(drawable.imageName);
-        Lib.current.addChild(sprite);
-        sprites.set(entity.id, sprite);
-    }
+        if(entities.applyChanges())
+        {
+            for(entity in entities.addedEntities)
+            {
+                var drawable = entity.get(CDrawable);
+                var pos = entity.get(CPosition);
 
-    public override function onEntityRemoved(entity:Entity)
-    {
-        var drawable = entity.get(CDrawable);
-
-        trace("entityid " + entity.id);
-        trace("spritse " + sprites);
-        var sprite = sprites.get(entity.id);
-        Lib.current.removeChild(sprite);
-        sprites.remove(entity.id);
-    }
-
-    public override function processEntities(entity:Entity)
-    {
-        var pos = entity.get(CPosition);
-        var sprite = sprites.get(entity.id);
-
-        sprite.x = pos.x;
-        sprite.y = pos.y;
+                trace("pos " + pos.x);
+                trace("dra " + drawable.imageName);
+                // var sprite = getSprite(drawable.imageName);
+                // Lib.current.addChild(sprite);
+                // sprites.set(entity.id, sprite);
+            }
+        }
     }
 
     public inline static function getBitmap(imageName:String)
@@ -85,23 +157,23 @@ class DrawableSystem extends System
 
 class Client
 {
-    var em:EntityManager = new EntityManager();
+    var drawableSystem:DrawableSystem;
 
     public function new()
     {
-        var ec = new EntityCreator(em);
-        var net = em.net;
-        net.connect("192.168.1.4", 32000);
-        em.addSystem(new DrawableSystem());
+        var ed = new EntityData();
+
+        drawableSystem = new DrawableSystem(ed);
+
+        var entity = ed.createEntity();
+        entity.set(new CPosition(200, 300));
+        entity.set(new CDrawable("idassignation.PNG"));
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
 
     function loop(event:Event)
     {
-        em.fixedUpdate(function()
-        {
-            em.processSystem(DrawableSystem);
-        });
+        drawableSystem.update();
     }
 }

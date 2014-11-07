@@ -58,17 +58,34 @@ class EntitySet
 
         for(change in changes)
         {
+            var component = cast change.component;
+
+            // FILTER OUT NON INTERESTING COMPONENTS
+            // trace("set code " + cast(code).toString(2));
+            // trace("comp code " + cast(1 <<  component._id).toString(2));
+            // trace("filter code " + cast(code & (1 << component._id)).toString(2));
+            if( (code & (1 << component._id)) == 0 ) continue;
+
             var entity = entities.get(change.entityId);
+
+            // MAKE ENTITY IF DOESN'T EXISTS
             if(entity == null)
             {
-                var component = cast change.component;
                 entity = new Entity2(ed, change.entityId);
-                entity.code = entity.code | (1 << component._id);
+                // trace("temp entity made");
                 entities.set(entity.id, entity);
                 addedEntities.set(entity);
             }
 
-            if( (code & entity.code) == code )
+            if( (entity.code & (1 << component._id)) == 0)
+            {
+                entity.code = entity.code | (1 << component._id);
+                entity.components[component._id] = change.component;
+                // trace("entity not fully built " + cast(entity.code).toString(2));
+            }
+
+            // MODS AND DELETE
+            if(entity.code == code)
             {
                 var component = cast change.component;
                 switch(change.type)
@@ -80,6 +97,17 @@ class EntitySet
                         removedEntities.set(entity);
                         entities.remove(entity.id);
                 }
+            }
+        }
+
+        // ADDING INTERESTING ENTITIES
+        for(entity in addedEntities)
+        {
+            trace("adding entities " + cast(entity.code).toString(2));
+            if(entity.code != code)
+            {
+                addedEntities.remove(entity);
+                entities.remove(entity.id);
             }
         }
 
@@ -112,6 +140,7 @@ class EntityData
             var cclass = cast componentClass;
             entitySet.code = entitySet.code | (1 << (cclass.__id));
         }
+        trace("entityset code " + cast(entitySet.code).toString(2));
 
         entitySets.push(entitySet);
 

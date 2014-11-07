@@ -7,6 +7,7 @@
     <haxelib name="openfl" />
     <haxelib name="anette" />
     <haxelib name="hxserializer" />
+    <haxelib name="polygonal-ds" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" exclude="openfl.svg" />
     <icon path="Assets/openfl.svg" />
