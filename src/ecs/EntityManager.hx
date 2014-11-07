@@ -43,7 +43,7 @@ class EntitySet
 
     public function new(ed:EntityData)
     {
-        code = ids++;
+        // code = ids++;
         this.ed = ed;
     }
 
@@ -103,7 +103,7 @@ class EntitySet
         // ADDING INTERESTING ENTITIES
         for(entity in addedEntities)
         {
-            trace("adding entities " + cast(entity.code).toString(2));
+            // trace("adding entities " + cast(entity.code).toString(2));
             if(entity.code != code)
             {
                 addedEntities.remove(entity);
@@ -133,12 +133,14 @@ class EntityData
     public function getEntities(componentClassList:Array<Class<Component>>)
     {
         var entitySet = new EntitySet(this);
-
+        trace("fresh entityset " + cast(entitySet.code).toString(2));
         // Move into EntitySet?
         for(componentClass in componentClassList)
         {
             var cclass = cast componentClass;
             entitySet.code = entitySet.code | (1 << (cclass.__id));
+            trace("updating entityset " + cast(entitySet.code).toString(2));
+            trace("componentClass " + componentClass);
         }
         trace("entityset code " + cast(entitySet.code).toString(2));
 

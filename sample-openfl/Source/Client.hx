@@ -4,8 +4,10 @@ import flash.display.Bitmap;
 import flash.display.Sprite;
 import flash.display.DisplayObject;
 import flash.display.DisplayObjectContainer;
+import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.Event;
+import flash.ui.Keyboard;
 import flash.Lib;
 import openfl.Assets;
 
@@ -126,10 +128,19 @@ class DrawableSystem
                 var pos = entity.get(CPosition);
 
                 trace("pos " + pos.x);
-                trace("dra " + drawable.imageName);
-                // var sprite = getSprite(drawable.imageName);
-                // Lib.current.addChild(sprite);
-                // sprites.set(entity.id, sprite);
+                trace("image " + drawable.imageName);
+
+                var sprite = getSprite(drawable.imageName);
+                Lib.current.addChild(sprite);
+                sprites.set(entity.id, sprite);
+            }
+
+            for(entity in entities.changedEntities)
+            {
+                var pos = entity.get(CPosition);
+                var sprite = sprites.get(entity.id);
+                sprite.x = pos.x;
+                sprite.y = pos.y;
             }
         }
     }
@@ -155,15 +166,73 @@ class DrawableSystem
 }
 
 
+class InputSystem
+{
+    var entities:EntitySet;
+
+    public function new(ed:EntityData)
+    {
+        entities = ed.getEntities([CPosition]);
+
+        Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+        Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+    }
+
+    var left:Bool;
+    var right:Bool;
+    var up:Bool;
+    var down:Bool;
+
+    function onKeyDown(ev:KeyboardEvent)
+    {
+        if(ev.keyCode == Keyboard.LEFT) left = true;
+        if(ev.keyCode == Keyboard.RIGHT) right = true;
+        if(ev.keyCode == Keyboard.UP) up = true;
+        if(ev.keyCode == Keyboard.DOWN) down = true;
+    }
+
+    function onKeyUp(ev:KeyboardEvent)
+    {
+        if(ev.keyCode == Keyboard.LEFT) left = false;
+        if(ev.keyCode == Keyboard.RIGHT) right = false;
+        if(ev.keyCode == Keyboard.UP) up = false;
+        if(ev.keyCode == Keyboard.DOWN) down = false;
+    }
+
+    public function update()
+    {
+        entities.applyChanges();
+
+        for(entity in entities.entities)
+        {
+
+            var pos = entity.get(CPosition);
+            var newpos = new CPosition(pos.x, pos.y);
+
+            if(left) newpos.x -= 5;
+            if(right) newpos.x += 5;
+            if(up) newpos.y -= 5;
+            if(down) newpos.y += 5;
+
+            entity.set(newpos);
+        }
+    }
+}
+
+
+
 class Client
 {
     var drawableSystem:DrawableSystem;
+    var inputSystem:InputSystem;
 
     public function new()
     {
         var ed = new EntityData();
 
         drawableSystem = new DrawableSystem(ed);
+        trace("inputsystem");
+        inputSystem = new InputSystem(ed);
 
         var entity = ed.createEntity();
         entity.set(new CPosition(200, 300));
@@ -175,5 +244,6 @@ class Client
     function loop(event:Event)
     {
         drawableSystem.update();
+        inputSystem.update();
     }
 }
