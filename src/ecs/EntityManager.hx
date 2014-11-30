@@ -53,7 +53,7 @@ class Lel
         var fields = Context.getBuildFields();
         var pos = Context.currentPos();
 
-        fields = hxserializer.SerializerMacro._build(fields);
+        fields = podstream.SerializerMacro._build(fields);
         fields = IdAssign._build(fields);
 
         return fields;
@@ -349,7 +349,7 @@ class NetEntityManager extends Net
         this.em = em;
 
         // RESOLVE COMPONENT TYPES FROM STRING
-        var components = hxserializer.SerializerMacro.getSerialized();
+        var components = podstream.SerializerMacro.getSerialized();
         for(component in components)
         {
             var c = Type.resolveClass(component);
@@ -466,12 +466,16 @@ class NetEntityManager extends Net
     //     }
     // }
 
-    public function sendWorldStateTo(connection:Connection, player:Entity)
+    public function sendWorldStateTo(connection:Connection)
     {
         trace("sendWorldStateTo");
+        var connectionEntity = entitiesByConnection.get(connection);
+        if(connectionEntity == null)
+            throw "Connection has to have a bound entity";
+
         for(entity in entities)
         {
-            if(entity == player) continue;
+            if(entity == connectionEntity) continue;
             _sendCreate(connection.output, entity);
         }
     }

@@ -6,7 +6,7 @@
     <source path="./../src" />
     <haxelib name="openfl" />
     <haxelib name="anette" />
-    <haxelib name="hxserializer" />
+    <haxelib name="podstream" />
     <haxelib name="polygonal-ds" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" exclude="openfl.svg" />

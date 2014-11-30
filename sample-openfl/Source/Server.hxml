@@ -7,7 +7,7 @@
 -D server
 -lib anette
 -lib protohx
--lib hxserializer
+-lib podstream
 -lib polygonal-ds
 -debug
 

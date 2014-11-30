@@ -50,15 +50,15 @@ class Server
     			em.processSystem(MovementSystem);
 			});
     	}
-	
-}
+    }
+    
 	function onConnection(connection:Connection)
 	{
 		trace("onConnection");
 
         var datPlayer = net.create("player", {x:400, y:400});
         net.bindEntity(connection, datPlayer);
-        net.sendWorldStateTo(connection, datPlayer);
+        net.sendWorldStateTo(connection);
 	}
 
     function onDisconnection(conn:Connection)
