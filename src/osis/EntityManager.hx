@@ -37,9 +37,9 @@ class IdAssign
 
 // Removed _id & __id _sid & __sid are generated from hxserializer
 typedef CompTP = {public var _sid:Int;
-                  public var _id:Int;
-                  public var sync:Bool;
-                  public var netOwner:Int;
+                  // public var _id:Int;
+                  // public var sync:Bool;
+                  // public var netOwner:Int;
                   public function unserialize(bi:haxe.io.BytesInput):Void;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
@@ -69,13 +69,13 @@ class Lel
     }
 }
 
-#if !macro
-@:autoBuild(ecs.Lel.build())
-#end
+// #if !macro
+// @:autoBuild(ecs.Lel.build())
+// #end
 class Component
 {
-    public var sync:Bool = false;
-    public var netOwner:Int;
+    // public var sync:Bool = false;
+    // public var netOwner:Int;
 }
 
 
@@ -101,16 +101,15 @@ class Entity
 
     public function get<T>(componentType:Class<T>):T
     {
-        var ctype = cast componentType;
-        var comp = cast components[ctype.__id];
-        if(comp == null) throw "Entity " + id + " doesn't have component " + componentType;
+        var comp:T = cast components[(untyped componentType).__sid];
+        if(comp == null)
+            throw "Entity " + id + " doesn't have component " + componentType;
         return comp;
     }
 
     public function has<T>(componentType:Class<T>):Bool
     {
-        var ctype = cast componentType;
-        var comp = cast components[ctype.__id];
+        var comp:T = cast components[(untyped componentType).__sid];
         if(comp == null) return false;
         return true;
     }
@@ -129,7 +128,7 @@ class System
     {
         for(componentType in componentTypeList)
         {
-            code = code | (1 << (componentType.__id));
+            code = code | (1 << (componentType.__sid));
         }
     }
 
@@ -180,16 +179,17 @@ class EntityManager
         }
     }
 
-    public function addComponent<T:{var _id:Int; var sync:Bool; var netOwner:Int;}>(entity:Entity, component:T, ?sync:Bool):T
+    public function addComponent<T>(entity:Entity, component:T, ?sync:Bool):T
     {
-        if(sync != null)
-        {
-            component.sync = sync;
-            component.netOwner = entity.id;
-        }
+        // if(sync != null)
+        // {
+        //     component.sync = sync;
+        //     component.netOwner = entity.id;
+        // }
+        var component = cast component;
 
-        entity.components[component._id] = cast component;
-        entity.code = entity.code | (1 << component._id);
+        entity.components[component._sid] = cast component;
+        entity.code = entity.code | (1 << component._sid);
 
         for(system in systems)
         {
@@ -210,14 +210,14 @@ class EntityManager
         return cast component;
     }
 
-    public function removeComponent<T:{_id:Int}>(entity:Entity, component:T)
+    public function removeComponent<T:{_sid:Int}>(entity:Entity, component:T)
     {
-        removeComp(entity, component._id);
+        removeComp(entity, component._sid);
     }
 
-    public function removeComponentOfType<T:{__id:Int}>(entity:Entity, componentType:T)
+    public function removeComponentOfType<T:{__sid:Int}>(entity:Entity, componentType:T)
     {
-        removeComp(entity, componentType.__id);
+        removeComp(entity, componentType.__sid);
     }
 
     inline function removeComp(entity:Entity, componentId:Int)

@@ -58,17 +58,14 @@ class BuildEntities
                 // ITERATE OVER COMPONENT VALUES
                 for(f in component.keys())
                 {
-                    var varType = null;
+                    // var varType = null;
 
-                    trace("f " + f);
                     var value = component.get(f);
-                    trace(value);
-                    trace("type " + Type.typeof(value));
 
-                    if(Type.typeof(value) == TInt)
-                        varType = CInt;
-                    else
-                        varType = CString;
+                    // if(Type.typeof(value) == TInt)
+                    //     varType = CInt;
+                    // else
+                    //     varType = CString;
 
                     block.push(macro $i{instanceName}.$f = $v{value});
                 }
@@ -108,6 +105,9 @@ class BuildEntities
                 }
             }
 
+            // RETURN ENTITY
+            block.push(macro return entity);
+
 
             var func = {args:[],
                         ret:null,
@@ -128,7 +128,7 @@ class BuildEntities
         for(f in fields)
         {
             trace("Serialized : " + new haxe.macro.Printer().printField(f));
-            trace("gnn " + f);
+            // trace("gnn " + f);
         }
 
         return fields;

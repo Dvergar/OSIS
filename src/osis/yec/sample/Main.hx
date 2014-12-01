@@ -7,6 +7,11 @@ class Main
     {
 
         var em = new EntityManager();
+        var player = em.createPlayer();
+        trace(PositionComponent.__sid);
+        var pos = player.get(PositionComponent);
+        trace("pos " + pos.x);
+
         // trace("gnn");
         // var pos = new Test2();
         // pos.x = 100;

@@ -112,9 +112,10 @@ class BuildComponents
                              access: [APublic]
             });
 
+            // BEFORE DEFINETYPE, PLEASE :|
+            if(attachedComponentMacro != null)
+                attachedComponentMacro(compFields);
 
-        // haxe.macro.Context.onGenerate(function (types)
-        // {
             Context.defineType({
                 pos: pos,
                 params: [],
@@ -126,16 +127,12 @@ class BuildComponents
                 // kind: TDClass(null, [], false),
                 kind: TDClass({name: "EntityManager", sub: "Component", pack: ["osis"], params: []}, [], false)
             });
-        // });
 
-            
-            if(attachedComponentMacro != null)
-                attachedComponentMacro(compFields);
 
             for(f in compFields)
             {
                 trace("Component " + new haxe.macro.Printer().printField(f));
-                trace("rawComponent " + f);
+                // trace("rawComponent " + f);
             }
         }
 
