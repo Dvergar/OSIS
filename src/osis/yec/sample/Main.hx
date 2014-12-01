@@ -12,6 +12,9 @@ class Main
         var pos = player.get(PositionComponent);
         trace("pos " + pos.x);
 
+        pos = em.addComponent(player, new PositionComponent());
+        trace("pos " + pos.x);
+
         // trace("gnn");
         // var pos = new Test2();
         // pos.x = 100;

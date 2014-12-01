@@ -45,29 +45,29 @@ typedef CompTP = {public var _sid:Int;
 
 
 
-class Lel
-{
-    #if macro
-    static var ids:Int = 0;
-    static public function _build(fields:Array<Field>):Array<Field>
-    {
-        var fields = Context.getBuildFields();
-        var pos = Context.currentPos();
+// class Lel
+// {
+//     #if macro
+//     static var ids:Int = 0;
+//     static public function _build(fields:Array<Field>):Array<Field>
+//     {
+//         var fields = Context.getBuildFields();
+//         var pos = Context.currentPos();
 
-        fields = podstream.SerializerMacro._build(fields);
-        fields = IdAssign._build(fields);
+//         fields = podstream.SerializerMacro._build(fields);
+//         fields = IdAssign._build(fields);
 
-        return fields;
-    }
-    #end
+//         return fields;
+//     }
+//     #end
 
-    macro static public function build():Array<Field>
-    {
-        var fields = Context.getBuildFields();
-        fields = _build(fields);  // remove fields = _...
-        return fields;
-    }
-}
+//     macro static public function build():Array<Field>
+//     {
+//         var fields = Context.getBuildFields();
+//         fields = _build(fields);  // remove fields = _...
+//         return fields;
+//     }
+// }
 
 // #if !macro
 // @:autoBuild(ecs.Lel.build())
@@ -186,10 +186,10 @@ class EntityManager
         //     component.sync = sync;
         //     component.netOwner = entity.id;
         // }
-        var component = cast component;
+        // var component = cast component;
 
-        entity.components[component._sid] = cast component;
-        entity.code = entity.code | (1 << component._sid);
+        entity.components[(untyped component)._sid] = cast component;
+        entity.code = entity.code | (1 << (untyped component)._sid);
 
         for(system in systems)
         {
@@ -207,7 +207,7 @@ class EntityManager
             }
         }
 
-        return cast component;
+        return component;
     }
 
     public function removeComponent<T:{_sid:Int}>(entity:Entity, component:T)
