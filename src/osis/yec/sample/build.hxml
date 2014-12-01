@@ -1,0 +1,11 @@
+-main Main.hx
+-cpp "D:\prog\#BUILDS\yaml\"
+-lib yaml
+-lib osis
+-lib anette
+-lib polygonal-ds
+-lib podstream
+-D client
+-debug
+
+-cmd "D:\prog\#BUILDS\yaml\Main-debug.exe"

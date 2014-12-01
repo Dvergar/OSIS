@@ -1,0 +1,10 @@
+Player:
+    PositionComponent:
+        x: 100
+        y: 300
+
+    CLIENT:
+        DescriptionComponent:
+            name: "hihi"
+            text: "hoho"
+

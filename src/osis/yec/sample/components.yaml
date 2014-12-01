@@ -1,0 +1,7 @@
+PositionComponent:
+    x: NetInt
+    y: NetInt
+
+DescriptionComponent:
+    name: String
+    text: String

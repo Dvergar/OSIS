@@ -1,4 +1,5 @@
-package ecs;
+package osis;
+
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import anette.*;
@@ -68,20 +69,20 @@ class Lel
     }
 }
 
-
+#if !macro
 @:autoBuild(ecs.Lel.build())
+#end
 class Component
 {
     public var sync:Bool = false;
     public var netOwner:Int;
-
-
 }
 
 
 class Entity
 {
     static var ids:Int = 0;
+    
     public var code:Int = 0;
     public var id:Int;
     public var components:Array<Component> = new Array();
@@ -148,7 +149,9 @@ class System
     }
 }
 
-
+#if !macro
+@:build(osis.yec.Builder.build())
+#end
 class EntityManager
 {
     var systems:haxe.ds.IntMap<System2> = new haxe.ds.IntMap();
@@ -350,6 +353,7 @@ class NetEntityManager extends Net
 
         // RESOLVE COMPONENT TYPES FROM STRING
         var components = podstream.SerializerMacro.getSerialized();
+        // var components:Array<String> = [];
         for(component in components)
         {
             var c = Type.resolveClass(component);
