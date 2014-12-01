@@ -1,6 +1,5 @@
-import ecs.EntityManager;
-import protohx.Protohx;
-import haxe.io.BytesOutput;
+import osis.EntityManager;
+// import haxe.io.BytesOutput;
 import anette.*;
 import Common;
 
@@ -27,12 +26,12 @@ class Server
 {
 	var net:NetEntityManager;
     var em:EntityManager;
-    var ec:EntityCreator;
+    // var ec:EntityCreator;
 
     public function new()
     {
     	em = new EntityManager();
-    	ec = new EntityCreator(em);
+    	// ec = new EntityCreator(em);
     	net = em.net;
     	net.server("192.168.1.4", 32000);
         net.socket.onConnection = onConnection;
@@ -56,9 +55,9 @@ class Server
 	{
 		trace("onConnection");
 
-        var datPlayer = net.create("player", {x:400, y:400});
-        net.bindEntity(connection, datPlayer);
-        net.sendWorldStateTo(connection);
+        var datPlayer = net.create("Player");
+        // net.bindEntity(connection, datPlayer);
+        // net.sendWorldStateTo(connection);
 	}
 
     function onDisconnection(conn:Connection)

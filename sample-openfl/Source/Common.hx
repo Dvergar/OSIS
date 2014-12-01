@@ -1,4 +1,4 @@
-import ecs.EntityManager;
+import osis.EntityManager;
 
 #if client
 import Client;
@@ -6,27 +6,27 @@ import Client;
 
 
 
-class CText extends Component
-{
-    @string public var value:String;
+// class CText extends Component
+// {
+//     @string public var value:String;
 
-    public function new(?value:String)
-    {
-        this.value = value;
-    }
-}
+//     public function new(?value:String)
+//     {
+//         this.value = value;
+//     }
+// }
 
-class CPosition extends Component
-{
-    @short public var x:Float;
-    @short public var y:Float;
+// class CPosition extends Component
+// {
+//     @short public var x:Float;
+//     @short public var y:Float;
 
-    public function new(x:Float, y:Float)
-    {
-        this.x = x;
-        this.y = y;
-    }
-}
+//     public function new(x:Float, y:Float)
+//     {
+//         this.x = x;
+//         this.y = y;
+//     }
+// }
 
 
 class MovementSystem extends System
@@ -43,27 +43,27 @@ class MovementSystem extends System
 }
 
 
-class EntityCreator
-{
-    var em:EntityManager;
+// class EntityCreator
+// {
+//     var em:EntityManager;
 
-    public function new(em:EntityManager)
-    {
-        this.em = em;
-        em.net.registerTemplate("player", player);
-    }
+//     public function new(em:EntityManager)
+//     {
+//         this.em = em;
+//         em.net.registerTemplate("player", player);
+//     }
 
-    public function player(args:Dynamic)
-    {
-        var entity = em.createEntity();
-        var pos = em.addComponent(entity, new CPosition(args.x, args.y), true);
+//     public function player(args:Dynamic)
+//     {
+//         var entity = em.createEntity();
+//         var pos = em.addComponent(entity, new CPosition(args.x, args.y), true);
 
-        #if client
-        em.addComponent(entity, new CDrawable("idassignation.PNG"));
-        #end
+//         #if client
+//         em.addComponent(entity, new CDrawable("idassignation.PNG"));
+//         #end
 
-        return entity;
-    }
-}
+//         return entity;
+//     }
+// }
 
 

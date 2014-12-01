@@ -117,7 +117,7 @@ class Entity
 
 
 typedef System2 = {> System, _id: Int}
-@:autoBuild(ecs.IdAssign.build())
+@:autoBuild(osis.IdAssign.build())
 class System
 {
     public var code:Int = 0;
@@ -128,7 +128,7 @@ class System
     {
         for(componentType in componentTypeList)
         {
-            code = code | (1 << (componentType.__sid));
+            code = code | (1 << componentType.__sid);
         }
     }
 
@@ -334,10 +334,11 @@ class NetEntityManager extends Net
     var em:EntityManager;
     var entities:Map<Int, Entity> = new Map();
     var componentTypes:Array<Class<Component>> = new Array();
-    var templates:Array<Dynamic->Entity> = new Array();
-    var templatesByString:Map<String, Int> = new Map();
-    var templatesIds:Int = 0;
-    var syncComponents:Array<Component> = new Array();
+    // var templates:Array<Dynamic->Entity> = new Array();
+    // var templatesByString:Map<String, Int> = new Map();
+    // var templatesIds:Int = 0;
+    // var syncComponents:Array<Component> = new Array();
+    var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
     // var eventListeners:Map<String, Dynamic->Void> = new Map();
 
     static inline var CREATE_ENTITY = 0;
@@ -351,7 +352,7 @@ class NetEntityManager extends Net
     {
         this.em = em;
 
-        // RESOLVE COMPONENT TYPES FROM STRING
+        // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
         var components = podstream.SerializerMacro.getSerialized();
         // var components:Array<String> = [];
         for(component in components)
@@ -359,6 +360,10 @@ class NetEntityManager extends Net
             var c = Type.resolveClass(component);
             componentTypes.push(cast c);
         }
+
+        // GET ENTITY FACTORY (MACRO)
+        var entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
+        trace("entityFactory " + entityFactory);
     }
 
     //////////////// SERVER //////////////
@@ -377,13 +382,15 @@ class NetEntityManager extends Net
     }
 
     // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
-    public function create(name:String, args:Dynamic)
+    public function create(name:String)
     {
-        var templateId = templatesByString.get(name);
-        if(templateId == null) throw "This entity type hasn't been registered";
-        var entity = templates[templateId](args);
+        // var templateId = templatesByString.get(name);
+        var templateId = entityFactory.indexOf(name);
+        if(templateId == -1) throw "The entity '${name}' doesn't exists";
+        // var entity = templates[templateId](args);
+        var entity:Entity = Reflect.field(em,'create' + entityFactory[templateId])();
         entity.templateId = templateId;
-        entity.args = args;
+        // entity.args = args;
 
         // SEND
         for(connection in socket.connections)
@@ -391,9 +398,9 @@ class NetEntityManager extends Net
 
         entities.set(entity.id, entity);
 
-        for(component in entity.components)
-            if(component != null)
-                if(component.sync) syncComponents.push(component);
+        // for(component in entity.components)
+        //     if(component != null)
+        //         if(component.sync) syncComponents.push(component);
 
         return entity;
     }
@@ -403,9 +410,9 @@ class NetEntityManager extends Net
         output.writeInt8(CREATE_TEMPLATE_ENTITY);
         output.writeInt16(entity.id);
         output.writeInt8(entity.templateId);
-        var argsSerialized = haxe.Serializer.run(entity.args);
-        output.writeInt16(argsSerialized.length);
-        output.writeString(argsSerialized);
+        // var argsSerialized = haxe.Serializer.run(entity.args);
+        // output.writeInt16(argsSerialized.length);
+        // output.writeString(argsSerialized);
     }
 
     public function createEntity()
@@ -432,11 +439,11 @@ class NetEntityManager extends Net
 
         trace("entitycomponents " + entity.components);
 
-        for(component in entity.components)
-            if(component != null)
-                if(component.sync)
-                    syncComponents.remove(component);
-        trace("entity destroyed " + syncComponents);
+        // for(component in entity.components)
+        //     if(component != null)
+        //         if(component.sync)
+        //             syncComponents.remove(component);
+        // trace("entity destroyed " + syncComponents);
 
 
         em.destroyEntity(entity);
@@ -452,7 +459,7 @@ class NetEntityManager extends Net
             connection.output.writeInt8(component._sid);
             component.serialize(connection.output);
         }
-        if(component.sync) syncComponents.push(cast component);
+        // if(component.sync) syncComponents.push(cast component);
         em.addComponent(entity, component);
         return cast component;
     }
@@ -529,10 +536,11 @@ class NetEntityManager extends Net
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
                     var templateId = connection.input.readInt8();
-                    var argsLength = connection.input.readInt16();
-                    var argsSerialized = connection.input.readString(argsLength);
-                    var args = haxe.Unserializer.run(argsSerialized);
-                    var entity = templates[templateId](args);
+                    // var argsLength = connection.input.readInt16();
+                    // var argsSerialized = connection.input.readString(argsLength);
+                    // var args = haxe.Unserializer.run(argsSerialized);
+                    // var entity = templates[templateId](args);
+                    var entity = Reflect.field(em,'create' + entityFactory[templateId])();
                     entities.set(entityId, entity);
 
                 // case EVENT:
@@ -582,12 +590,12 @@ class NetEntityManager extends Net
     //     output.writeString(serializedMsg);
     // }
 
-    public function registerTemplate(name:String, func:Dynamic->Entity)
-    {
-        var id = templatesIds++;
-        templates[id] = func;
-        templatesByString.set(name, id);
-    }
+    // public function registerTemplate(name:String, func:Dynamic->Entity)
+    // {
+    //     var id = templatesIds++;
+    //     templates[id] = func;
+    //     templatesByString.set(name, id);
+    // }
 
     // public function registerEvent(name:String, func:Dynamic)
     // {
@@ -600,18 +608,18 @@ class NetEntityManager extends Net
         {
             socket.pump();
             #if server
-            for(component in syncComponents)
-            {
-                var c = cast component;
+            // for(component in syncComponents)
+            // {
+            //     var c = cast component;
 
-                for(connection in socket.connections)
-                {
-                    connection.output.writeInt8(UPDATE_COMPONENT);
-                    connection.output.writeInt16(c.netOwner);
-                    connection.output.writeInt8(c._sid);
-                    c.serialize(connection.output);
-                }
-            }
+            //     for(connection in socket.connections)
+            //     {
+            //         connection.output.writeInt8(UPDATE_COMPONENT);
+            //         connection.output.writeInt16(c.netOwner);
+            //         connection.output.writeInt8(c._sid);
+            //         c.serialize(connection.output);
+            //     }
+            // }
             #end
             socket.flush();
         }

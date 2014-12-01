@@ -9,6 +9,7 @@
 -lib protohx
 -lib podstream
 -lib polygonal-ds
+-lib yaml
 -debug
 
 -cmd "neko D:\prog\#BUILDS\ecs.n"

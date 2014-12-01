@@ -1,7 +1,11 @@
 PositionComponent:
-    x: NetInt
-    y: NetInt
+    x: NetFloat
+    y: NetFloat
 
 DescriptionComponent:
     name: String
     text: String
+
+CPosition:
+    x: NetFloat
+    y: NetFloat

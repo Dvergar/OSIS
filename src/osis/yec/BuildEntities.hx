@@ -10,6 +10,8 @@ import yaml.util.ObjectMap;
 
 class BuildEntities
 {
+    static var entityFactory:Array<String> = new Array();
+
     #if macro
     static public function _build(fields:Array<Field>):Array<Field>
     {
@@ -26,6 +28,7 @@ class BuildEntities
         for(entityName in data.keys())
         {
             trace("entityNAme " + entityName);
+            entityFactory.push(entityName);
             var entity:AnyObjectMap = data.get(entityName);
             trace("entity " + entity);
 
@@ -124,6 +127,11 @@ class BuildEntities
                          pos: pos});
         // });
         }
+
+        haxe.macro.Context.onGenerate(function(types)
+        {
+            Context.addResource("entityFactory", haxe.io.Bytes.ofString(haxe.Serializer.run(entityFactory)));
+        });
 
         for(f in fields)
         {
