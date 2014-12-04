@@ -8,6 +8,7 @@
     <haxelib name="anette" />
     <haxelib name="podstream" />
     <haxelib name="polygonal-ds" />
+    <haxelib name="yaml" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" exclude="openfl.svg" />
     <icon path="Assets/openfl.svg" />

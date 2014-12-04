@@ -294,6 +294,17 @@ class EntityManager
 
         if(loops > maxFrameSkip) throw "out of fixed timestep";
     }
+
+    function lel()
+    {
+        trace("lolilel");
+    }
+
+    // NEEDED HERE TO PREVENT REFLECTION HELL
+    public function createFactoryEntity(type:String):Entity
+    {
+        return Reflect.field(this, type)();
+    }
 }
 
 
@@ -362,9 +373,19 @@ class NetEntityManager extends Net
         }
 
         // GET ENTITY FACTORY (MACRO)
-        var entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
+        entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
         trace("entityFactory " + entityFactory);
+        trace("lel " + entityFactory[0]);
+
+        // Reflect.callMethod(em, 'lel', []);
+        // Reflect.field(em, 'lel')();
+        // var f:Void->Entity = Reflect.field(em, 'createPlayer');
+        // var entity:Entity = f();
+
+        em.createFactoryEntity('createPlayer');
     }
+
+
 
     //////////////// SERVER //////////////
     #if server
@@ -388,7 +409,12 @@ class NetEntityManager extends Net
         var templateId = entityFactory.indexOf(name);
         if(templateId == -1) throw "The entity '${name}' doesn't exists";
         // var entity = templates[templateId](args);
-        var entity:Entity = Reflect.field(em,'create' + entityFactory[templateId])();
+        // var entity:Entity = Reflect.field(em, 'create' + entityFactory[templateId])();
+        // var f:Void->Entity = Reflect.field(em, 'createPlayer');
+        // var entity:Entity = f();
+        // var entity:Entity = Reflect.field(em, 'createPlayer')();
+        var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
+        trace("entitytytyt " + entity);
         entity.templateId = templateId;
         // entity.args = args;
 
@@ -415,18 +441,24 @@ class NetEntityManager extends Net
         // output.writeString(argsSerialized);
     }
 
-    public function createEntity()
-    {
-        var entity = em.createEntity();
 
-        for(connection in socket.connections)
-        {
-            connection.output.writeInt8(CREATE_ENTITY);
-            connection.output.writeInt16(entity.id);
-        }
-        entities.set(entity.id, entity);
-        return entity;
-    }
+    // public function createEntity()
+    // {
+    //     trace("lel");
+    // }
+
+    // public function createEntity()
+    // {
+    //     var entity = em.createEntity();
+
+    //     for(connection in socket.connections)
+    //     {
+    //         connection.output.writeInt8(CREATE_ENTITY);
+    //         connection.output.writeInt16(entity.id);
+    //     }
+    //     entities.set(entity.id, entity);
+    //     return entity;
+    // }
 
     public function destroyEntity(entity:Entity)
     {

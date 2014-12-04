@@ -11,7 +11,7 @@ import flash.ui.Keyboard;
 import flash.Lib;
 import openfl.Assets;
 
-import ecs.EntityManager;
+import osis.EntityManager;
 
 import Common;
 
@@ -91,7 +91,7 @@ class Client
 
     public function new()
     {
-        var ec = new EntityCreator(em);
+        // var ec = new EntityCreator(em);
         var net = em.net;
         net.connect("192.168.1.4", 32000);
         em.addSystem(new DrawableSystem());

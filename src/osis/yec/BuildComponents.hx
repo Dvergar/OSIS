@@ -29,7 +29,7 @@ class BuildComponents
         var yamlPath = Context.definedValue("yamlpath");
         if(yamlPath == null)
             throw("You need to define your yaml path with
-                  '-D yamlpath your/yaml/path/'");
+                  '-D yamlpath=your/yaml/path/'");
 
         // PARSE YAML
         var data:AnyObjectMap  = Yaml.read(yamlPath + "components.yaml");

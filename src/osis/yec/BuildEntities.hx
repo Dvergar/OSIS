@@ -18,7 +18,7 @@ class BuildEntities
         var yamlPath = Context.definedValue("yamlpath");
         if(yamlPath == null)
             throw("You need to define your yaml path with
-                  '-D yamlpath your/yaml/path/'");
+                  '-D yamlpath=your/yaml/path/'");
         var data:AnyObjectMap  = Yaml.read(yamlPath + "entities.yaml");
 
         // var fields = Context.getBuildFields();
@@ -35,6 +35,10 @@ class BuildEntities
             var block = [];
 
             // CREATE ENTITY
+            block.push(macro trace("entity building"));
+            block.push(macro trace("entity building"));
+            block.push(macro trace("entity building"));
+            block.push(macro trace("entity building"));
             block.push(macro var entity = createEntity());
 
             function buildEntity(component:AnyObjectMap, componentName:String)
@@ -69,12 +73,15 @@ class BuildEntities
                     //     varType = CInt;
                     // else
                     //     varType = CString;
-
+                    block.push(macro trace("1"));
                     block.push(macro $i{instanceName}.$f = $v{value});
                 }
 
                 // ATTACH COMPONENT TO ENTITY
-                block.push(macro addComponent(entity, $i{instanceName}));
+                
+                block.push(macro trace("2"));
+                block.push(macro this.addComponent(entity, $i{instanceName}));
+                block.push(macro trace("3"));
             }
 
             for(componentName in entity.keys())

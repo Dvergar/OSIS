@@ -56,7 +56,7 @@ class Server
 		trace("onConnection");
 
         var datPlayer = net.create("Player");
-        // net.bindEntity(connection, datPlayer);
+        net.bindEntity(connection, datPlayer);
         // net.sendWorldStateTo(connection);
 	}
 
