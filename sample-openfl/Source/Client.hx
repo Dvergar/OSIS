@@ -16,15 +16,15 @@ import osis.EntityManager;
 import Common;
 
 
-class CDrawable extends Component
-{
-    public var imageName:String;
+// class CDrawable extends Component
+// {
+//     public var imageName:String;
 
-    public function new(imageName:String)
-    {
-        this.imageName = imageName;
-    }
-}
+//     public function new(imageName:String)
+//     {
+//         this.imageName = imageName;
+//     }
+// }
 
 
 class DrawableSystem extends System
@@ -38,6 +38,7 @@ class DrawableSystem extends System
 
     public override function onEntityAdded(entity:Entity)
     {
+        trace("onEntityAdded");
         var drawable = entity.get(CDrawable);
         var sprite = getSprite(drawable.imageName);
         Lib.current.addChild(sprite);
@@ -57,6 +58,7 @@ class DrawableSystem extends System
 
     public override function processEntities(entity:Entity)
     {
+        trace("plop");
         var pos = entity.get(CPosition);
         var sprite = sprites.get(entity.id);
 
@@ -103,6 +105,7 @@ class Client
     {
         em.fixedUpdate(function()
         {
+            // trace("hoy");
             em.processSystem(DrawableSystem);
         });
     }

@@ -1,5 +1,5 @@
 Player:
-    PositionComponent:
+    CPosition:
         x: 104
         y: 300
 
@@ -7,4 +7,6 @@ Player:
         DescriptionComponent:
             name: "hihi"
             text: "hoho"
+        CDrawable:
+            imageName: "idassignation.PNG"
 

@@ -37,45 +37,12 @@ class IdAssign
 
 // Removed _id & __id _sid & __sid are generated from hxserializer
 typedef CompTP = {public var _sid:Int;
-                  // public var _id:Int;
-                  // public var sync:Bool;
-                  // public var netOwner:Int;
                   public function unserialize(bi:haxe.io.BytesInput):Void;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
 
-
-// class Lel
-// {
-//     #if macro
-//     static var ids:Int = 0;
-//     static public function _build(fields:Array<Field>):Array<Field>
-//     {
-//         var fields = Context.getBuildFields();
-//         var pos = Context.currentPos();
-
-//         fields = podstream.SerializerMacro._build(fields);
-//         fields = IdAssign._build(fields);
-
-//         return fields;
-//     }
-//     #end
-
-//     macro static public function build():Array<Field>
-//     {
-//         var fields = Context.getBuildFields();
-//         fields = _build(fields);  // remove fields = _...
-//         return fields;
-//     }
-// }
-
-// #if !macro
-// @:autoBuild(ecs.Lel.build())
-// #end
 class Component
 {
-    // public var sync:Bool = false;
-    // public var netOwner:Int;
 }
 
 
@@ -181,13 +148,6 @@ class EntityManager
 
     public function addComponent<T>(entity:Entity, component:T, ?sync:Bool):T
     {
-        // if(sync != null)
-        // {
-        //     component.sync = sync;
-        //     component.netOwner = entity.id;
-        // }
-        // var component = cast component;
-
         entity.components[(untyped component)._sid] = cast component;
         entity.code = entity.code | (1 << (untyped component)._sid);
 
@@ -245,13 +205,6 @@ class EntityManager
     {
         return entity.get(componentType);
     }
-
-    // public function addSystem<T:{__id:Int}>(systemClass:T, ?args:Dynamic)
-    // {
-    //     var system:System = Type.createInstance(cast systemClass, args);
-    //     system.em = this;
-    //     systems.set(systemClass.__id, cast system);
-    // }
 
     public function addSystem<T:{_id:Int, em:EntityManager}>(system:T)
     {
@@ -345,19 +298,13 @@ class NetEntityManager extends Net
     var em:EntityManager;
     var entities:Map<Int, Entity> = new Map();
     var componentTypes:Array<Class<Component>> = new Array();
-    // var templates:Array<Dynamic->Entity> = new Array();
-    // var templatesByString:Map<String, Int> = new Map();
-    // var templatesIds:Int = 0;
-    // var syncComponents:Array<Component> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
-    // var eventListeners:Map<String, Dynamic->Void> = new Map();
 
     static inline var CREATE_ENTITY = 0;
     static inline var CREATE_TEMPLATE_ENTITY = 1;
     static inline var ADD_COMPONENT = 2;
     static inline var UPDATE_COMPONENT = 3;
     static inline var DESTROY_ENTITY = 4;
-    // static inline var EVENT = 5;
 
     public function new(em:EntityManager)
     {
@@ -365,7 +312,6 @@ class NetEntityManager extends Net
 
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
         var components = podstream.SerializerMacro.getSerialized();
-        // var components:Array<String> = [];
         for(component in components)
         {
             var c = Type.resolveClass(component);
@@ -374,18 +320,7 @@ class NetEntityManager extends Net
 
         // GET ENTITY FACTORY (MACRO)
         entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
-        trace("entityFactory " + entityFactory);
-        trace("lel " + entityFactory[0]);
-
-        // Reflect.callMethod(em, 'lel', []);
-        // Reflect.field(em, 'lel')();
-        // var f:Void->Entity = Reflect.field(em, 'createPlayer');
-        // var entity:Entity = f();
-
-        em.createFactoryEntity('createPlayer');
     }
-
-
 
     //////////////// SERVER //////////////
     #if server
@@ -408,25 +343,15 @@ class NetEntityManager extends Net
         // var templateId = templatesByString.get(name);
         var templateId = entityFactory.indexOf(name);
         if(templateId == -1) throw "The entity '${name}' doesn't exists";
-        // var entity = templates[templateId](args);
-        // var entity:Entity = Reflect.field(em, 'create' + entityFactory[templateId])();
-        // var f:Void->Entity = Reflect.field(em, 'createPlayer');
-        // var entity:Entity = f();
-        // var entity:Entity = Reflect.field(em, 'createPlayer')();
+
         var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
-        trace("entitytytyt " + entity);
         entity.templateId = templateId;
-        // entity.args = args;
 
         // SEND
         for(connection in socket.connections)
             _sendCreate(connection.output, entity);
 
         entities.set(entity.id, entity);
-
-        // for(component in entity.components)
-        //     if(component != null)
-        //         if(component.sync) syncComponents.push(component);
 
         return entity;
     }
@@ -436,16 +361,7 @@ class NetEntityManager extends Net
         output.writeInt8(CREATE_TEMPLATE_ENTITY);
         output.writeInt16(entity.id);
         output.writeInt8(entity.templateId);
-        // var argsSerialized = haxe.Serializer.run(entity.args);
-        // output.writeInt16(argsSerialized.length);
-        // output.writeString(argsSerialized);
     }
-
-
-    // public function createEntity()
-    // {
-    //     trace("lel");
-    // }
 
     // public function createEntity()
     // {
@@ -467,17 +383,8 @@ class NetEntityManager extends Net
             connection.output.writeInt8(DESTROY_ENTITY);
             connection.output.writeInt16(entity.id);
         }
+
         var entity = entities.get(entity.id);
-
-        trace("entitycomponents " + entity.components);
-
-        // for(component in entity.components)
-        //     if(component != null)
-        //         if(component.sync)
-        //             syncComponents.remove(component);
-        // trace("entity destroyed " + syncComponents);
-
-
         em.destroyEntity(entity);
         entities.remove(entity.id);
     }
@@ -491,23 +398,10 @@ class NetEntityManager extends Net
             connection.output.writeInt8(component._sid);
             component.serialize(connection.output);
         }
-        // if(component.sync) syncComponents.push(cast component);
+
         em.addComponent(entity, component);
         return cast component;
     }
-
-    // override function onData(connection:Connection)
-    // {
-    //     while(connection.input.mark - connection.input.position > 0)
-    //     {
-    //         var msgtype = connection.input.readInt8();
-    //         switch(msgtype)
-    //         {
-    //             case EVENT:
-    //                 receiveEvent(connection);
-    //         }
-    //     }
-    // }
 
     public function sendWorldStateTo(connection:Connection)
     {
@@ -568,91 +462,18 @@ class NetEntityManager extends Net
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
                     var templateId = connection.input.readInt8();
-                    // var argsLength = connection.input.readInt16();
-                    // var argsSerialized = connection.input.readString(argsLength);
-                    // var args = haxe.Unserializer.run(argsSerialized);
-                    // var entity = templates[templateId](args);
                     var entity = Reflect.field(em,'create' + entityFactory[templateId])();
                     entities.set(entityId, entity);
-
-                // case EVENT:
-                //     receiveEvent(connection);
             }
         }
     }
     #end
-
-    // function receiveEvent(connection:Connection)
-    // {
-    //     // trace("EVENT");
-    //     var eventLength = connection.input.readInt8();
-    //     var eventName = connection.input.readString(eventLength);
-    //     var msgLength = connection.input.readInt16();
-    //     var msgSerialized = connection.input.readString(msgLength);
-    //     var msg:Dynamic = haxe.Unserializer.run(msgSerialized);
-
-    //     #if server msg.entity = entitiesByConnection.get(connection); #end
-    //     var func = eventListeners.get(eventName);
-    //     if(func == null) throw "Not listener for event : " + eventName;
-    //     func(msg);
-    // }
-
-    // public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
-    // {
-    //     #if server
-    //     if(connection != null)
-    //         _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-    //     else
-    //         for(connection in socket.connections)
-    //             _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-    //     #end
-    //     #if client
-    //         _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
-    //     #end
-    // }
-
-    // inline function _sendEvent(output:haxe.io.BytesOutput, serializedMsg:String,
-    //                                                                 name:String)
-    // {
-    //     output.writeInt8(EVENT);
-    //     output.writeInt8(name.length);
-    //     output.writeString(name);
-        
-    //     output.writeInt16(serializedMsg.length);
-    //     output.writeString(serializedMsg);
-    // }
-
-    // public function registerTemplate(name:String, func:Dynamic->Entity)
-    // {
-    //     var id = templatesIds++;
-    //     templates[id] = func;
-    //     templatesByString.set(name, id);
-    // }
-
-    // public function registerEvent(name:String, func:Dynamic)
-    // {
-    //     eventListeners.set(name, func);
-    // }
 
     public function pump()
     {
         if(socket != null)
         {
             socket.pump();
-            #if server
-            // for(component in syncComponents)
-            // {
-            //     var c = cast component;
-
-            //     for(connection in socket.connections)
-            //     {
-            //         connection.output.writeInt8(UPDATE_COMPONENT);
-            //         connection.output.writeInt16(c.netOwner);
-            //         connection.output.writeInt8(c._sid);
-            //         c.serialize(connection.output);
-            //     }
-            // }
-            #end
             socket.flush();
         }
     }

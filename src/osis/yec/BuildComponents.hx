@@ -38,25 +38,17 @@ class BuildComponents
         var allowedTypes = ["Int", "String", "Float"];
         var allowedNetTypes = ["NetInt", "NetString", "NetFloat"];
 
-
-
-
-
-            Context.defineType({
-                pos: pos,
-                params: [],
-                pack: [],
-                name: "Test2",
-                fields: [],
-                isExtern: false,
-                meta: [],
-                // kind: TDClass(TPath({name: "Component", pack: [], params: []}), [], false)
-                kind: TDClass(null, [], false)
-            });
-
-
-
-
+        Context.defineType({
+            pos: pos,
+            params: [],
+            pack: [],
+            name: "Test2",
+            fields: [],
+            isExtern: false,
+            meta: [],
+            // kind: TDClass(TPath({name: "Component", pack: [], params: []}), [], false)
+            kind: TDClass(null, [], false)
+        });
 
         // ITERATE COMPONENTS
         for(componentName in data.keys())
@@ -89,7 +81,6 @@ class BuildComponents
                 }
 
                 var tpath = TPath({name: type, pack: [], params: []});
-                // newArgs.push({name:"_" + f, type:tpath, opt:false});
 
                 // BUILD FIELD
                 compFields.push({kind: FVar(tpath, null),
@@ -97,8 +88,6 @@ class BuildComponents
                                  name: f,
                                  pos: pos,
                                  access: [APublic]});
-
-                // block.push(macro $i{f} = $i{"_" + f});
             }
 
             compFields.push({kind: FFun({args: newArgs,

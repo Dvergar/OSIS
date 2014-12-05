@@ -1,4 +1,4 @@
-PositionComponent:
+CPosition:
     x: NetFloat
     y: NetFloat
 
@@ -9,3 +9,6 @@ DescriptionComponent:
 CPosition:
     x: NetFloat
     y: NetFloat
+
+CDrawable:
+    imageName: String

@@ -20,25 +20,16 @@ class BuildEntities
             throw("You need to define your yaml path with
                   '-D yamlpath=your/yaml/path/'");
         var data:AnyObjectMap  = Yaml.read(yamlPath + "entities.yaml");
-
-        // var fields = Context.getBuildFields();
         var pos = Context.currentPos();
 
-        trace(data);
         for(entityName in data.keys())
         {
-            trace("entityNAme " + entityName);
             entityFactory.push(entityName);
             var entity:AnyObjectMap = data.get(entityName);
-            trace("entity " + entity);
-
             var block = [];
 
             // CREATE ENTITY
-            block.push(macro trace("entity building"));
-            block.push(macro trace("entity building"));
-            block.push(macro trace("entity building"));
-            block.push(macro trace("entity building"));
+            block.push(macro trace("Create entity: " + $v{entityName}));
             block.push(macro var entity = createEntity());
 
             function buildEntity(component:AnyObjectMap, componentName:String)
@@ -65,15 +56,7 @@ class BuildEntities
                 // ITERATE OVER COMPONENT VALUES
                 for(f in component.keys())
                 {
-                    // var varType = null;
-
                     var value = component.get(f);
-
-                    // if(Type.typeof(value) == TInt)
-                    //     varType = CInt;
-                    // else
-                    //     varType = CString;
-                    block.push(macro trace("1"));
                     block.push(macro $i{instanceName}.$f = $v{value});
                 }
 
@@ -124,15 +107,12 @@ class BuildEntities
                         params:[],
                         expr:{expr:EBlock(block), pos:pos}};
 
-        // haxe.macro.Context.onGenerate(function (types)
-        // {
             fields.push({name: "create" + entityName,
                          doc: null,
                          meta: [],
                          access: [APublic],
                          kind: FFun(func),
                          pos: pos});
-        // });
         }
 
         haxe.macro.Context.onGenerate(function(types)
