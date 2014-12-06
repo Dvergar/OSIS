@@ -1,0 +1,11 @@
+{
+	"name": "osis",
+	"url": "https://github.com/Dvergar/OSIS",
+	"license": "BSD",
+	"tags": ["networking", "entity", "component", "ECS", "architecture"],
+	"description": "Entity Component System architecture with network support",
+	"version": "0.0.1",
+	"releasenote": "First release",
+	"contributors": [ "caribou" ],
+	"dependencies": {}
+}

@@ -1,14 +1,15 @@
 -main Main.hx
--cp ../../../../libs/anette/src/
--cp ../../../../libs/polygonal-ds/src/
--cp ../../../../libs/polygonal-printf/src/
--cp ../../../../libs/hx-yaml/src/
--cp ../../../../libs/podstream/src/
--cp ../../../../src/
+# -cp ../../../../libs/anette/src/
+# -cp ../../../../libs/polygonal-ds/src/
+# -cp ../../../../libs/polygonal-printf/src/
+# -cp ../../../../libs/hx-yaml/src/
+# -cp ../../../../libs/podstream/src/
+# -cp ../../../../src/
+-lib osis
 -D yamlpath=.\
 -D client
 -debug
--lib podstream
+# -lib podstream
 
 -cpp "D:\prog\#BUILDS\yaml\"
 -cmd "D:\prog\#BUILDS\yaml\Main-debug.exe"

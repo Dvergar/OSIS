@@ -3,11 +3,11 @@
     
     <app main="Client" path="Export" file="Client" />
     <source path="Source" />
-    <source path="./../libs/anette/src/"/>
-    <source path="./../libs/polygonal-ds/src/"/>
-    <source path="./../libs/polygonal-printf/src/"/>
-    <source path="./../libs/hx-yaml/src/"/>
-    <source path="./../libs/podstream/src/"/>
+    <!-- <source path="./../libs/anette/src/"/> -->
+    <!-- <source path="./../libs/polygonal-ds/src/"/> -->
+    <!-- <source path="./../libs/polygonal-printf/src/"/> -->
+    <!-- <source path="./../libs/hx-yaml/src/"/> -->
+    <!-- <source path="./../libs/podstream/src/"/> -->
     <source path="./../src" />
     <haxelib name="openfl" />
     <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\src\osis\yec\sample\" />
