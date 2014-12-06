@@ -13,7 +13,7 @@ class MovementSystem extends System
         trace("entity update " + entity.id);
         entity.get(CPosition).x += 0.1;
         trace("compopos " + entity.get(CPosition).x);
-        em.net.dispatch(entity, entity.get(CPosition));
+        em.net.markChanged(entity, entity.get(CPosition));
     }
 }
 

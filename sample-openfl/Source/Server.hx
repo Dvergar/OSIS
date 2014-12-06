@@ -38,8 +38,7 @@ class Server
     	{
     		em.fixedUpdate(function()
     		{
-                em.processSystem(MovementSystem);
-    			em.processSystem(DummySystem);
+                em.processAllSystems();
 			});
     	}
     }

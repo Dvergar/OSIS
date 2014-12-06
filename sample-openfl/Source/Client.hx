@@ -92,7 +92,8 @@ class Client
     {
         em.fixedUpdate(function()
         {
-            em.processSystem(DrawableSystem);
+            // em.processSystem(DrawableSystem);
+            em.processAllSystems();
         });
     }
 }

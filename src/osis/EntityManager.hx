@@ -57,8 +57,6 @@ class Entity
 
     // NET STUFF
     public var templateId:Int;
-    public var triggerEvent:Bool;
-    public var args:Dynamic;
 
     public function new()
     {
@@ -90,7 +88,6 @@ class System
     public var code:Int = 0;
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
-    public var change:Bool = true;
 
     public function need(componentTypeList:Array<Dynamic>)
     {
@@ -127,6 +124,7 @@ class System
 class EntityManager
 {
     var systems:haxe.ds.IntMap<System2> = new haxe.ds.IntMap();
+    var changedEntities:ListSet<Entity> = new ListSet();
     public var net:NetEntityManager;
 
     public function new()
@@ -218,17 +216,29 @@ class EntityManager
         systems.set(system._id, cast system);
     }
 
-    public function processSystem<T:{__id:Int}>(systemClass:T)
+    public function processAllSystems()
     {
-        var system = systems.get(systemClass.__id);
-        for(entity in system.entities)
+        for(system in systems)
         {
-            system.processEntity(entity);
-            if(!system.change) continue;
-            system.onEntityChange(entity);
+            for(entity in system.entities)
+            {
+                system.processEntity(entity);
+                if(changedEntities.has(entity)) system.onEntityChange(entity);
+            }
         }
-        system.change = false;
+
+        changedEntities.clear();
     }
+
+    // function processSystem<T:{__id:Int}>(systemClass:T)
+    // {
+    //     var system = systems.get(systemClass.__id);
+    //     for(entity in system.entities)
+    //     {
+    //         system.processEntity(entity);
+    //         if(changedEntities.has(entity)) system.onEntityChange(entity);
+    //     }
+    // }
 
     // FIXED UPDATE
     var loops:Int = 0;
@@ -263,17 +273,9 @@ class EntityManager
         return Reflect.field(this, type)();
     }
 
-    public function dispatch<T:{_sid:Int}>(entity:Entity, component:T)
+    public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        // trace("dispatch");
-        for(system in systems)
-        {          
-            if( (system.code | (1 << (untyped component)._sid)) == system.code )
-            {
-                // trace("from component id " + (untyped component)._sid);
-                system.change = true;
-            }
-        }
+        changedEntities.set(entity);
     }
 }
 
@@ -435,9 +437,9 @@ class NetEntityManager extends Net
         }
     }
 
-    public function dispatch<T:CompTP>(entity:Entity, component:T)
+    public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        em.dispatch(entity, component);
+        em.markChanged(entity, component);
 
         for(connection in socket.connections)
         {
@@ -493,7 +495,7 @@ class NetEntityManager extends Net
                     // trace(componentType);
                     var component = entity.get(componentType);
                     component.unserialize(connection.input);
-                    em.dispatch(entity, cast component);
+                    em.markChanged(entity, cast component);
                     // trace("received net event");
                     // trace("gnnn " + (untyped component).x);
 
@@ -506,7 +508,7 @@ class NetEntityManager extends Net
         }
     }
 
-    public function dispatch<T:CompTP>(entity:Entity, component:T)
+    public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
         // DUMMY, ACTUALLY USED FOR SERVER BUT PREVENT ISSUES
         // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
