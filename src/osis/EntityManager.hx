@@ -9,6 +9,8 @@ import de.polygonal.ds.LinkedQueue;
 import de.polygonal.ds.ListSet;
 
 
+typedef Connection = anette.Connection;
+
 class IdAssign
 {
     #if macro

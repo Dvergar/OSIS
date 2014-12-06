@@ -80,7 +80,6 @@ class Client
 
     public function new()
     {
-        // var ec = new EntityCreator(em);
         var net = em.net;
         net.connect("192.168.1.4", 32000);
         em.addSystem(new DrawableSystem());
@@ -92,7 +91,6 @@ class Client
     {
         em.fixedUpdate(function()
         {
-            // em.processSystem(DrawableSystem);
             em.processAllSystems();
         });
     }

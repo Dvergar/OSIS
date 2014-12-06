@@ -1,8 +1,5 @@
 import osis.EntityManager;
-// import haxe.io.BytesOutput;
-import anette.*;
 import Common;
-
 
 
 class DummySystem extends System
