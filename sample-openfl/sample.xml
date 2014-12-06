@@ -9,6 +9,7 @@
     <haxelib name="podstream" />
     <haxelib name="polygonal-ds" />
     <haxelib name="yaml" />
+    <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\src\osis\yec\sample\" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" exclude="openfl.svg" />
     <icon path="Assets/openfl.svg" />

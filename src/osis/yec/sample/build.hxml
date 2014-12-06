@@ -1,11 +1,12 @@
 -main Main.hx
--cpp "D:\prog\#BUILDS\yaml\"
+-D yamlpath=.\
+-D client
+-debug
 -lib yaml
 -lib osis
 -lib anette
 -lib polygonal-ds
 -lib podstream
--D client
--debug
 
+-cpp "D:\prog\#BUILDS\yaml\"
 -cmd "D:\prog\#BUILDS\yaml\Main-debug.exe"

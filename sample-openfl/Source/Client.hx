@@ -16,17 +16,6 @@ import osis.EntityManager;
 import Common;
 
 
-// class CDrawable extends Component
-// {
-//     public var imageName:String;
-
-//     public function new(imageName:String)
-//     {
-//         this.imageName = imageName;
-//     }
-// }
-
-
 class DrawableSystem extends System
 {
     var sprites:Map<Int, Sprite> = new Map();
@@ -49,8 +38,6 @@ class DrawableSystem extends System
     {
         var drawable = entity.get(CDrawable);
 
-        trace("entityid " + entity.id);
-        trace("spritse " + sprites);
         var sprite = sprites.get(entity.id);
         Lib.current.removeChild(sprite);
         sprites.remove(entity.id);
@@ -58,7 +45,6 @@ class DrawableSystem extends System
 
     public override function processEntities(entity:Entity)
     {
-        trace("plop");
         var pos = entity.get(CPosition);
         var sprite = sprites.get(entity.id);
 

@@ -248,11 +248,6 @@ class EntityManager
         if(loops > maxFrameSkip) throw "out of fixed timestep";
     }
 
-    function lel()
-    {
-        trace("lolilel");
-    }
-
     // NEEDED HERE TO PREVENT REFLECTION HELL
     public function createFactoryEntity(type:String):Entity
     {

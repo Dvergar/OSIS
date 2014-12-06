@@ -5,11 +5,12 @@
 -cp ../../src
 -cp src-gen
 -D server
+-D yamlpath=..\..\src\osis\yec\sample\
+-debug
 -lib anette
 -lib protohx
 -lib podstream
 -lib polygonal-ds
 -lib yaml
--debug
 
 -cmd "neko D:\prog\#BUILDS\ecs.n"
