@@ -8,7 +8,6 @@
 -D yamlpath=..\..\src\osis\yec\sample\
 -debug
 -lib anette
--lib protohx
 -lib podstream
 -lib polygonal-ds
 -lib yaml

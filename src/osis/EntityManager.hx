@@ -5,7 +5,6 @@ import haxe.macro.Context;
 import anette.*;
 import anette.Protocol;
 import anette.Bytes;
-import de.polygonal.ds.LinkedQueue;
 import de.polygonal.ds.ListSet;
 
 
@@ -270,6 +269,7 @@ class EntityManager
     }
 
     // NEEDED HERE TO PREVENT REFLECTION HELL
+    @:allow(NetEntityManager)
     public function createFactoryEntity(type:String):Entity
     {
         return Reflect.field(this, type)();
@@ -371,14 +371,14 @@ class NetEntityManager extends Net
 
         // SEND
         for(connection in socket.connections)
-            _sendCreate(connection.output, entity);
+            sendCreate(connection.output, entity);
 
         entities.set(entity.id, entity);
 
         return entity;
     }
 
-    public function _sendCreate(output:haxe.io.BytesOutput, entity:Entity)
+    function sendCreate(output:haxe.io.BytesOutput, entity:Entity)
     {
         output.writeInt8(CREATE_TEMPLATE_ENTITY);
         output.writeInt16(entity.id);
@@ -435,7 +435,7 @@ class NetEntityManager extends Net
         for(entity in entities)
         {
             if(entity == connectionEntity) continue;
-            _sendCreate(connection.output, entity);
+            sendCreate(connection.output, entity);
         }
     }
 
@@ -517,6 +517,7 @@ class NetEntityManager extends Net
     }
     #end
 
+    @:allow(EntityManager)
     public function pump()
     {
         if(socket != null)
