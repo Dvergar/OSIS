@@ -1,33 +1,5 @@
 import osis.EntityManager;
 
-#if client
-import Client;
-#end
-
-
-
-// class CText extends Component
-// {
-//     @string public var value:String;
-
-//     public function new(?value:String)
-//     {
-//         this.value = value;
-//     }
-// }
-
-// class CPosition extends Component
-// {
-//     @short public var x:Float;
-//     @short public var y:Float;
-
-//     public function new(x:Float, y:Float)
-//     {
-//         this.x = x;
-//         this.y = y;
-//     }
-// }
-
 
 class MovementSystem extends System
 {
@@ -36,36 +8,10 @@ class MovementSystem extends System
         need([CPosition]);
     }
 
-    public override function onEntityChange(entity:Entity)
+    public override function processEntity(entity:Entity)
     {
-        trace("moop " + entity.get(CPosition).x);
         entity.get(CPosition).x += 0.1;
-        // em.dispatch(entity.get(CPosition));
+        em.net.dispatch(entity, entity.get(CPosition));
     }
 }
-
-
-// class EntityCreator
-// {
-//     var em:EntityManager;
-
-//     public function new(em:EntityManager)
-//     {
-//         this.em = em;
-//         em.net.registerTemplate("player", player);
-//     }
-
-//     public function player(args:Dynamic)
-//     {
-//         var entity = em.createEntity();
-//         var pos = em.addComponent(entity, new CPosition(args.x, args.y), true);
-
-//         #if client
-//         em.addComponent(entity, new CDrawable("idassignation.PNG"));
-//         #end
-
-//         return entity;
-//     }
-// }
-
 

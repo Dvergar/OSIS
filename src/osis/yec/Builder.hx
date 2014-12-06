@@ -21,7 +21,7 @@ class Builder
     {
         trace("wat");
         var fields:Array<Field> = Context.getBuildFields();
-        BuildComponents._build(fields, podstream.SerializerMacro._build);
+        BuildComponents._build(fields);
         BuildEntities._build(fields);
         // podstream._build(fields);
         return fields;

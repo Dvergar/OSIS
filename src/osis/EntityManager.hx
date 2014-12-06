@@ -100,9 +100,14 @@ class System
         }
     }
 
-    public function onEntityChange(entity:Entity)
+    public function processEntity(entity:Entity)
     {
         // trace("processEntities");
+    }
+
+    public function onEntityChange(entity:Entity)
+    {
+        // trace("onEntityChange");
     }
 
     public function onEntityAdded(entity:Entity)
@@ -216,9 +221,10 @@ class EntityManager
     public function processSystem<T:{__id:Int}>(systemClass:T)
     {
         var system = systems.get(systemClass.__id);
-        if(!system.change) return;
         for(entity in system.entities)
         {
+            system.processEntity(entity);
+            if(!system.change) continue;
             system.onEntityChange(entity);
             system.change = false;
         }
@@ -257,11 +263,15 @@ class EntityManager
         return Reflect.field(this, type)();
     }
 
-    public function dispatch(component:Component)
+    public function dispatch<T:{_sid:Int}>(entity:Entity, component:T)
     {
         for(system in systems)
-            if( (system.code & (1 << (untyped component)._sid)) == system.code )
+        {          
+            if( (system.code | (1 << (untyped component)._sid)) == system.code )
+            {
                 system.change = true;
+            }
+        }
     }
 }
 
@@ -319,6 +329,7 @@ class NetEntityManager extends Net
         var components = podstream.SerializerMacro.getSerialized();
         for(component in components)
         {
+            trace("stringcomp " + component);
             var c = Type.resolveClass(component);
             componentTypes.push(cast c);
         }
@@ -421,6 +432,19 @@ class NetEntityManager extends Net
             _sendCreate(connection.output, entity);
         }
     }
+
+    public function dispatch<T:CompTP>(entity:Entity, component:T)
+    {
+        em.dispatch(entity, component);
+
+        for(connection in socket.connections)
+        {
+            connection.output.writeInt8(UPDATE_COMPONENT);
+            connection.output.writeInt16(entity.id);
+            connection.output.writeInt8(component._sid);
+            component.serialize(connection.output);
+        }
+    }
     #end
 
     //////////////// CLIENT //////////////
@@ -459,10 +483,15 @@ class NetEntityManager extends Net
                     // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
+                    // trace("componentTypeId " + componentTypeId);
+                    // trace("componentTypes " + componentTypes);
                     var componentType = cast componentTypes[componentTypeId];
                     var entity = entities.get(entityId);
+                    // trace(componentType);
                     var component = entity.get(componentType);
                     component.unserialize(connection.input);
+                    em.dispatch(entity, cast component);
+                    // trace("received net event");
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
@@ -471,6 +500,12 @@ class NetEntityManager extends Net
                     entities.set(entityId, entity);
             }
         }
+    }
+
+    public function dispatch<T:CompTP>(entity:Entity, component:T)
+    {
+        // DUMMY, ACTUALLY USED FOR SERVER BUT PREVENT ISSUES
+        // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
     }
     #end
 

@@ -6,9 +6,5 @@ DescriptionComponent:
     name: String
     text: String
 
-CPosition:
-    x: NetFloat
-    y: NetFloat
-
 CDrawable:
     imageName: String

@@ -14,17 +14,15 @@ class DummySystem extends System
 
     public override function onEntityChange(entity:Entity)
     {
-        trace("dummy chnage");
+        // trace("dummy change");
     }
 }
-
 
 
 class Server
 {
 	var net:NetEntityManager;
     var em:EntityManager;
-    // var ec:EntityCreator;
 
     public function new()
     {
@@ -49,7 +47,6 @@ class Server
 	function onConnection(connection:Connection)
 	{
 		trace("onConnection");
-
         var datPlayer = net.create("Player");
         net.bindEntity(connection, datPlayer);
         // net.sendWorldStateTo(connection);

@@ -16,10 +16,7 @@ class Test extends Component
 class BuildComponents
 {
     #if macro
-    static public function _build(
-                    fields:Array<Field>,
-                    ?attachedComponentMacro:Array<Field>->Array<Field>)
-                    :Array<Field>
+    static public function _build(fields:Array<Field>):Array<Field>
     {
         trace("hello");
 
@@ -102,8 +99,9 @@ class BuildComponents
             });
 
             // BEFORE DEFINETYPE, PLEASE :|
-            if(attachedComponentMacro != null)
-                attachedComponentMacro(compFields);
+            podstream.SerializerMacro._build(compFields, componentName);
+            // if(attachedComponentMacro != null)
+            //     attachedComponentMacro(compFields);
 
             Context.defineType({
                 pos: pos,
