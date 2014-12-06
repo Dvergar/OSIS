@@ -11,6 +11,7 @@ import de.polygonal.ds.ListSet;
 
 typedef Connection = anette.Connection;
 
+
 class IdAssign
 {
     #if macro
@@ -37,8 +38,7 @@ class IdAssign
 }
 
 
-// Removed _id & __id _sid & __sid are generated from hxserializer
-typedef CompTP = {public var _sid:Int;
+typedef CompTP = {public var _id:Int;
                   public function unserialize(bi:haxe.io.BytesInput):Void;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
@@ -68,7 +68,7 @@ class Entity
 
     public function get<T>(componentType:Class<T>):T
     {
-        var comp:T = cast components[(untyped componentType).__sid];
+        var comp:T = cast components[(untyped componentType).__id];
         if(comp == null)
             throw "Entity " + id + " doesn't have component " + componentType;
         return comp;
@@ -76,7 +76,7 @@ class Entity
 
     public function has<T>(componentType:Class<T>):Bool
     {
-        var comp:T = cast components[(untyped componentType).__sid];
+        var comp:T = cast components[(untyped componentType).__id];
         if(comp == null) return false;
         return true;
     }
@@ -95,7 +95,7 @@ class System
     {
         for(componentType in componentTypeList)
         {
-            code = code | (1 << componentType.__sid);
+            code = code | (1 << componentType.__id);
         }
     }
 
@@ -154,8 +154,8 @@ class EntityManager
 
     public function addComponent<T>(entity:Entity, component:T, ?sync:Bool):T
     {
-        entity.components[(untyped component)._sid] = cast component;
-        entity.code = entity.code | (1 << (untyped component)._sid);
+        entity.components[(untyped component)._id] = cast component;
+        entity.code = entity.code | (1 << (untyped component)._id);
 
         for(system in systems)
         {
@@ -176,14 +176,14 @@ class EntityManager
         return component;
     }
 
-    public function removeComponent<T:{_sid:Int}>(entity:Entity, component:T)
+    public function removeComponent<T:{_id:Int}>(entity:Entity, component:T)
     {
-        removeComp(entity, component._sid);
+        removeComp(entity, component._id);
     }
 
-    public function removeComponentOfType<T:{__sid:Int}>(entity:Entity, componentType:T)
+    public function removeComponentOfType<T:{__id:Int}>(entity:Entity, componentType:T)
     {
-        removeComp(entity, componentType.__sid);
+        removeComp(entity, componentType.__id);
     }
 
     inline function removeComp(entity:Entity, componentId:Int)
@@ -417,7 +417,7 @@ class NetEntityManager extends Net
         {
             connection.output.writeInt8(ADD_COMPONENT);
             connection.output.writeInt16(entity.id);
-            connection.output.writeInt8(component._sid);
+            connection.output.writeInt8(component._id);
             component.serialize(connection.output);
         }
 
@@ -447,7 +447,7 @@ class NetEntityManager extends Net
         {
             connection.output.writeInt8(UPDATE_COMPONENT);
             connection.output.writeInt16(entity.id);
-            connection.output.writeInt8(component._sid);
+            connection.output.writeInt8(component._id);
             component.serialize(connection.output);
         }
     }
