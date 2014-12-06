@@ -45,7 +45,7 @@ class DrawableSystem extends System
 
     public override function onEntityChange(entity:Entity)
     {
-        trace("entity change");
+        // trace("entity change");
         var pos = entity.get(CPosition);
         var sprite = sprites.get(entity.id);
 

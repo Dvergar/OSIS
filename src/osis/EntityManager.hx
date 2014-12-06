@@ -226,8 +226,8 @@ class EntityManager
             system.processEntity(entity);
             if(!system.change) continue;
             system.onEntityChange(entity);
-            system.change = false;
         }
+        system.change = false;
     }
 
     // FIXED UPDATE
@@ -265,10 +265,12 @@ class EntityManager
 
     public function dispatch<T:{_sid:Int}>(entity:Entity, component:T)
     {
+        // trace("dispatch");
         for(system in systems)
         {          
             if( (system.code | (1 << (untyped component)._sid)) == system.code )
             {
+                // trace("from component id " + (untyped component)._sid);
                 system.change = true;
             }
         }
@@ -482,6 +484,7 @@ class NetEntityManager extends Net
                 case UPDATE_COMPONENT:
                     // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
+                    // trace("entity update comenent " + entityId);
                     var componentTypeId = connection.input.readInt8();
                     // trace("componentTypeId " + componentTypeId);
                     // trace("componentTypes " + componentTypes);
@@ -492,6 +495,7 @@ class NetEntityManager extends Net
                     component.unserialize(connection.input);
                     em.dispatch(entity, cast component);
                     // trace("received net event");
+                    // trace("gnnn " + (untyped component).x);
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();

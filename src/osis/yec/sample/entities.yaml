@@ -8,5 +8,5 @@ Player:
             name: "hihi"
             text: "hoho"
         CDrawable:
-            imageName: "idassignation.PNG"
+            imageName: "soldier_idle.png"
 

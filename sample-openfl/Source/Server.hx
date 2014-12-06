@@ -49,7 +49,7 @@ class Server
 		trace("onConnection");
         var datPlayer = net.create("Player");
         net.bindEntity(connection, datPlayer);
-        // net.sendWorldStateTo(connection);
+        net.sendWorldStateTo(connection);
 	}
 
     function onDisconnection(conn:Connection)
