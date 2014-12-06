@@ -4,10 +4,10 @@ import Common;
 
 class DummySystem extends System
 {
-	public function new()
-	{
-		need([CPosition]);
-	}
+    public function new()
+    {
+        need([CPosition]);
+    }
 
     public override function onEntityChange(entity:Entity)
     {
@@ -18,35 +18,35 @@ class DummySystem extends System
 
 class Server
 {
-	var net:NetEntityManager;
+    var net:NetEntityManager;
     var em:EntityManager;
 
     public function new()
     {
-    	em = new EntityManager();
-    	net = em.net;
-    	net.server("192.168.1.4", 32000);
+        em = new EntityManager();
+        net = em.net;
+        net.server("192.168.1.4", 32000);
         net.socket.onConnection = onConnection;
-    	net.socket.onDisconnection = onDisconnection;
+        net.socket.onDisconnection = onDisconnection;
         em.addSystem(new MovementSystem());
-    	em.addSystem(new DummySystem());
+        em.addSystem(new DummySystem());
 
-    	while(true)
-    	{
-    		em.fixedUpdate(function()
-    		{
+        while(true)
+        {
+            em.fixedUpdate(function()
+            {
                 em.processAllSystems();
-			});
-    	}
+            });
+        }
     }
     
-	function onConnection(connection:Connection)
-	{
-		trace("onConnection");
+    function onConnection(connection:Connection)
+    {
+        trace("onConnection");
         var datPlayer = net.create("Player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
-	}
+    }
 
     function onDisconnection(conn:Connection)
     {

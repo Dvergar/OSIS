@@ -14,7 +14,7 @@ typedef Connection = anette.Connection;
 class IdAssign
 {
     #if macro
-    static var ids:Int = 1;  // Careful common to systems & components
+    static var ids:Int = 1;
     static public function _build(fields:Array<Field>):Array<Field>
     {
         var id = ids++;
@@ -81,8 +81,7 @@ class Entity
     }
 }
 
-
-typedef System2 = {> System, _id: Int}
+typedef SystemTP = {> System, _id: Int}
 @:autoBuild(osis.IdAssign.build())
 class System
 {
@@ -124,7 +123,7 @@ class System
 #end
 class EntityManager
 {
-    var systems:haxe.ds.IntMap<System2> = new haxe.ds.IntMap();
+    var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
     var changedEntities:ListSet<Entity> = new ListSet();
     public var net:NetEntityManager;
 
@@ -488,18 +487,12 @@ class NetEntityManager extends Net
                 case UPDATE_COMPONENT:
                     // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
-                    // trace("entity update comenent " + entityId);
                     var componentTypeId = connection.input.readInt8();
-                    // trace("componentTypeId " + componentTypeId);
-                    // trace("componentTypes " + componentTypes);
                     var componentType = cast componentTypes[componentTypeId];
                     var entity = entities.get(entityId);
-                    // trace(componentType);
                     var component = entity.get(componentType);
                     component.unserialize(connection.input);
                     em.markChanged(entity, cast component);
-                    // trace("received net event");
-                    // trace("gnnn " + (untyped component).x);
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
