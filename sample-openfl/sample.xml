@@ -3,14 +3,14 @@
     
     <app main="Client" path="Export" file="Client" />
     <source path="Source" />
+    <source path="./../libs/anette/src/"/>
+    <source path="./../libs/polygonal-ds/src/"/>
+    <source path="./../libs/polygonal-printf/src/"/>
+    <source path="./../libs/hx-yaml/src/"/>
+    <source path="./../libs/podstream/src/"/>
     <source path="./../src" />
     <haxelib name="openfl" />
-    <haxelib name="anette" />
-    <haxelib name="podstream" />
-    <haxelib name="polygonal-ds" />
-    <haxelib name="yaml" />
     <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\src\osis\yec\sample\" />
     <haxedef name="client" />
-    <assets path="Assets" rename="assets" exclude="openfl.svg" />
-    <icon path="Assets/openfl.svg" />
+    <assets path="Assets" rename="assets" />
 </project>

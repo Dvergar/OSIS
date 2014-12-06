@@ -1,0 +1,15 @@
+[submodule "libs/anette"]
+	path = libs/anette
+	url = https://github.com/Dvergar/Anette
+[submodule "libs/hx-yaml"]
+	path = libs/hx-yaml
+	url = https://github.com/mikestead/hx-yaml.git
+[submodule "libs/polygonal-printf"]
+	path = libs/polygonal-printf
+	url = https://github.com/polygonal/printf.git
+[submodule "libs/polygonal-ds"]
+	path = libs/polygonal-ds
+	url = https://github.com/polygonal/ds.git
+[submodule "libs/podstream"]
+	path = libs/podstream
+	url = https://github.com/Dvergar/PODStream.git

@@ -1,11 +1,13 @@
 -main Main.hx
+-cp ../../../../libs/anette/src/
+-cp ../../../../libs/polygonal-ds/src/
+-cp ../../../../libs/polygonal-printf/src/
+-cp ../../../../libs/hx-yaml/src/
+-cp ../../../../libs/podstream/src/
+-cp ../../../../src/
 -D yamlpath=.\
 -D client
 -debug
--lib yaml
--lib osis
--lib anette
--lib polygonal-ds
 -lib podstream
 
 -cpp "D:\prog\#BUILDS\yaml\"
