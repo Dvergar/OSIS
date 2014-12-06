@@ -4,20 +4,18 @@ import anette.*;
 import Common;
 
 
-class PositionSystem extends System
-{
-	public function new()
-	{
-		need([CPosition]);
-	}
-}
 
-class LelSystem extends System
+class DummySystem extends System
 {
 	public function new()
 	{
 		need([CPosition]);
 	}
+
+    public override function onEntityChange(entity:Entity)
+    {
+        trace("dummy chnage");
+    }
 }
 
 
@@ -31,22 +29,19 @@ class Server
     public function new()
     {
     	em = new EntityManager();
-    	// ec = new EntityCreator(em);
     	net = em.net;
     	net.server("192.168.1.4", 32000);
         net.socket.onConnection = onConnection;
     	net.socket.onDisconnection = onDisconnection;
-    	em.addSystem(new MovementSystem());
-
-        // DEBUG
-        // var entity = em.createEntity();
-        // net.addComponent(entity, new CText("how"));
+        em.addSystem(new MovementSystem());
+    	em.addSystem(new DummySystem());
 
     	while(true)
     	{
     		em.fixedUpdate(function()
     		{
-    			em.processSystem(MovementSystem);
+                em.processSystem(MovementSystem);
+    			em.processSystem(DummySystem);
 			});
     	}
     }

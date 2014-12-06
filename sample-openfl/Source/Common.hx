@@ -36,9 +36,11 @@ class MovementSystem extends System
         need([CPosition]);
     }
 
-    public override function processEntities(entity:Entity)
+    public override function onEntityChange(entity:Entity)
     {
+        trace("moop " + entity.get(CPosition).x);
         entity.get(CPosition).x += 0.1;
+        // em.dispatch(entity.get(CPosition));
     }
 }
 

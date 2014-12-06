@@ -43,7 +43,7 @@ class DrawableSystem extends System
         sprites.remove(entity.id);
     }
 
-    public override function processEntities(entity:Entity)
+    public override function onEntityChange(entity:Entity)
     {
         var pos = entity.get(CPosition);
         var sprite = sprites.get(entity.id);

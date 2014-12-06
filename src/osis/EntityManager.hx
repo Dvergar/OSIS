@@ -90,6 +90,7 @@ class System
     public var code:Int = 0;
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
+    public var change:Bool = true;
 
     public function need(componentTypeList:Array<Dynamic>)
     {
@@ -99,7 +100,7 @@ class System
         }
     }
 
-    public function processEntities(entity:Entity)
+    public function onEntityChange(entity:Entity)
     {
         // trace("processEntities");
     }
@@ -215,9 +216,11 @@ class EntityManager
     public function processSystem<T:{__id:Int}>(systemClass:T)
     {
         var system = systems.get(systemClass.__id);
+        if(!system.change) return;
         for(entity in system.entities)
         {
-            system.processEntities(entity);
+            system.onEntityChange(entity);
+            system.change = false;
         }
     }
 
@@ -252,6 +255,13 @@ class EntityManager
     public function createFactoryEntity(type:String):Entity
     {
         return Reflect.field(this, type)();
+    }
+
+    public function dispatch(component:Component)
+    {
+        for(system in systems)
+            if( (system.code & (1 << (untyped component)._sid)) == system.code )
+                system.change = true;
     }
 }
 
