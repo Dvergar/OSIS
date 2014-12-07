@@ -80,8 +80,7 @@ class Client
 
     public function new()
     {
-        var net = em.net;
-        net.connect("192.168.1.4", 32000);
+        var net = em.connect("192.168.1.4", 32000);
         em.addSystem(new DrawableSystem());
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);

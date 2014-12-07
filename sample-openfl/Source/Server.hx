@@ -24,10 +24,10 @@ class Server
     public function new()
     {
         em = new EntityManager();
-        net = em.net;
-        net.server("192.168.1.4", 32000);
-        net.socket.onConnection = onConnection;
-        net.socket.onDisconnection = onDisconnection;
+        
+        net = em.listen("192.168.1.4", 32000);
+        net.onConnection = onConnection;
+        net.onDisconnection = onDisconnection;
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 
