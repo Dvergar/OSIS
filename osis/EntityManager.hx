@@ -1,9 +1,5 @@
 package osis;
 
-// #if lol
-// lelfuck
-// #end
-
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import anette.*;
@@ -133,7 +129,7 @@ class EntityManager
 
     public function new()
     {
-        net = new NetEntityManager(this);
+        // net = new NetEntityManager(this);
     }
 
     public function createEntity():Entity
@@ -282,37 +278,81 @@ class EntityManager
     {
         changedEntities.set(entity);
     }
+
+    // NET HELPERS
+    #if client
+    public function connect(address:String, port:Int)
+    {
+        net = new NetEntityManager(this);
+        net.connect(address, port);
+        return net;
+    }
+    #end
+
+    #if server
+    public function listen(address:String, port:Int)
+    {
+        net = new NetEntityManager(this);
+        net.listen(address, port);
+        return net;
+    }
+    #end
 }
 
 
 class Net
 {
+    public var onConnection:Connection->Void;
+    public var onDisconnection:Connection->Void;
+
     #if server
     public var socket:Server;
-    public function server(address:String, port:Int)
+    @:allow(EntityManager)
+    public function listen(address:String, port:Int)
     {
         socket = new Server(address, port);
         socket.protocol = new Prefixed();
         socket.onData = onData;
+        socket.onConnection = _onConnection;
+        socket.onDisconnection = _onDisconnection;
         return socket;
     }
 
     #elseif client
     public var socket:Client;
+    @:allow(EntityManager)
     public function connect(address:String, port:Int)
     {
         socket = new Client();
         socket.protocol = new Prefixed();
         socket.onData = onData;
-        // client.onConnection = onConnection;
-        // client.onDisconnection = onDisconnection;
+        socket.onConnection = _onConnection;
+        socket.onDisconnection = _onDisconnection;
         socket.connect(address, port);
     }
-
     #end
+
+    function _onConnection(connection:Connection)
+    {
+        if(onConnection == null)
+            trace("Client connected: you should probably bind" +
+                  "the onConnection function");
+        else
+            onConnection(connection);
+    }
+
+    function _onDisconnection(connection:Connection)
+    {
+        if(onDisconnection == null)
+            trace("Client disconnected: you should probably bind" +
+                  " the onDisconnection function");
+        else
+            onDisconnection(connection);
+    }
+
     function onData(connection:Connection)
     {
-        trace("data");
+        // OVERRIDDEN BY NETENTITYMANAGER
     }
 }
 
