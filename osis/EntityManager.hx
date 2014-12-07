@@ -118,13 +118,28 @@ class System
     }
 }
 
+
+// TODO: Pool
+class Change
+{
+    public var entity:Entity;
+    public var componentType:Int;
+
+    public function new(entity:Entity, componentType:Int)
+    {
+        this.entity = entity;
+        this.componentType = componentType;
+    }
+}
+
+
 #if !macro
 @:build(osis.yec.Builder.build())
 #end
 class EntityManager
 {
     var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
-    var changedEntities:ListSet<Entity> = new ListSet();
+    var changes:Array<Change> = new Array();
     public var net:NetEntityManager;
 
     public function new()
@@ -218,16 +233,30 @@ class EntityManager
 
     public function processAllSystems()
     {
+        // CHANGE EVENT
+        for(change in changes)
+        {
+            // TODO: iterate over entity.registeredSystemsCode instead
+            for(system in systems)
+            {
+                if( (system.code | (1 << change.componentType) ) == system.code )
+                {
+                    system.onEntityChange(change.entity);
+                }
+            }
+        }
+
+        changes = new Array();
+
+        // PROCESS LOOP
         for(system in systems)
         {
             for(entity in system.entities)
             {
                 system.processEntity(entity);
-                if(changedEntities.has(entity)) system.onEntityChange(entity);
             }
         }
 
-        changedEntities.clear();
     }
 
     // function processSystem<T:{__id:Int}>(systemClass:T)
@@ -276,7 +305,7 @@ class EntityManager
 
     public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        changedEntities.set(entity);
+        changes.push(new Change(entity, untyped component._id));
     }
 
     // NET HELPERS

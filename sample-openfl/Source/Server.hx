@@ -2,20 +2,6 @@ import osis.EntityManager;
 import Common;
 
 
-class DummySystem extends System
-{
-    public function new()
-    {
-        need([CPosition]);
-    }
-
-    public override function onEntityChange(entity:Entity)
-    {
-        // trace("dummy change");
-    }
-}
-
-
 class Server
 {
     var net:NetEntityManager;

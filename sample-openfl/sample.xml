@@ -15,7 +15,7 @@
     <haxelib name="anette" />
     <haxelib name="osis" />
     <haxelib name="polygonal-ds" />
-    <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\osis\yec\sample\" />
+    <haxeflag name="-D yamlpath=Source\" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" />
 </project>

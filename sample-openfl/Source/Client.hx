@@ -45,7 +45,7 @@ class DrawableSystem extends System
 
     public override function onEntityChange(entity:Entity)
     {
-        // trace("entity change");
+        trace("entity change");
         var pos = entity.get(CPosition);
         var sprite = sprites.get(entity.id);
 
@@ -82,6 +82,7 @@ class Client
     {
         var net = em.connect("192.168.1.4", 32000);
         em.addSystem(new DrawableSystem());
+        em.addSystem(new DummySystem());
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
