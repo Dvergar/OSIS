@@ -10,7 +10,12 @@
     <!-- <source path="./../libs/podstream/src/"/> -->
     <source path="./../src" />
     <haxelib name="openfl" />
-    <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\src\osis\yec\sample\" />
+    <haxelib name="yaml" />
+    <haxelib name="podstream" />
+    <haxelib name="anette" />
+    <haxelib name="osis" />
+    <haxelib name="polygonal-ds" />
+    <haxeflag name="-D yamlpath=C:\Users\caramoon\Dropbox\Prog2\Haxe\OSIS\osis\yec\sample\" />
     <haxedef name="client" />
     <assets path="Assets" rename="assets" />
 </project>

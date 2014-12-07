@@ -1,4 +1,2 @@
--lib podstream:0.0.1
--lib anette:0.0.1
--lib polygonal-ds:1.4.1
--lib yaml:1.2.0
+-lib anette
+-D lol

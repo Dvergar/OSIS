@@ -1,5 +1,9 @@
 package osis;
 
+// #if lol
+// lelfuck
+// #end
+
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import anette.*;

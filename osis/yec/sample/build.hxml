@@ -1,11 +1,12 @@
 -main Main.hx
+-lib osis
 # -cp ../../../../libs/anette/src/
 # -cp ../../../../libs/polygonal-ds/src/
 # -cp ../../../../libs/polygonal-printf/src/
 # -cp ../../../../libs/hx-yaml/src/
 # -cp ../../../../libs/podstream/src/
 # -cp ../../../../src/
--lib osis
+-lib anette
 -D yamlpath=.\
 -D client
 -debug

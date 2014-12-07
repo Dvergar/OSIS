@@ -2,14 +2,19 @@
 
 -main Server.hx
 -neko "D:\prog\#BUILDS\ecs.n"
--cp ../../libs/anette/src/
--cp ../../libs/polygonal-ds/src/
--cp ../../libs/polygonal-printf/src/
--cp ../../libs/hx-yaml/src/
--cp ../../libs/podstream/src/
--cp ../../src/
+# -cp ../../libs/anette/src/
+# -cp ../../libs/polygonal-ds/src/
+# -cp ../../libs/polygonal-printf/src/
+# -cp ../../libs/hx-yaml/src/
+# -cp ../../libs/podstream/src/
+# -cp ../../src/
+-lib osis
+-lib polygonal-ds
+-lib yaml
+-lib podstream
+-lib anette
 -D server
--D yamlpath=../../src/osis/yec/sample/
+-D yamlpath=../../osis/yec/sample/
 -debug
 
 -cmd "neko D:\prog\#BUILDS\ecs.n"
