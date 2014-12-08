@@ -24,8 +24,9 @@ class MovementSystem extends System
 
     public override function processEntity(entity:Entity)
     {
-        entity.get(CPosition).x += 0.1;
-        em.net.markChanged(entity, entity.get(CPosition));
+        var pos = entity.get(CPosition);
+        pos.x += 0.1;
+        net.markChanged(entity, pos);
     }
 }
 

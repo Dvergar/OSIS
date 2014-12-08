@@ -88,6 +88,7 @@ class System
     public var code:Int = 0;
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
+    public var net:NetEntityManager;
 
     public function need(componentTypeList:Array<Dynamic>)
     {
@@ -144,7 +145,7 @@ class EntityManager
 
     public function new()
     {
-        // net = new NetEntityManager(this);
+        this.net = new NetEntityManager(this);
     }
 
     public function createEntity():Entity
@@ -152,7 +153,6 @@ class EntityManager
         return new Entity();
     }
 
-    // Shouldn't be called for network entities
     public function destroyEntity(entity:Entity)
     {
         for(component in entity.components)
@@ -225,9 +225,12 @@ class EntityManager
         return entity.get(componentType);
     }
 
-    public function addSystem<T:{_id:Int, em:EntityManager}>(system:T)
+    public function addSystem<T:{_id:Int,
+                                 em:EntityManager,
+                                 net:NetEntityManager}>(system:T)
     {
         system.em = this;
+        system.net = this.net;
         systems.set(system._id, cast system);
     }
 
@@ -312,7 +315,6 @@ class EntityManager
     #if client
     public function connect(address:String, port:Int)
     {
-        net = new NetEntityManager(this);
         net.connect(address, port);
         return net;
     }
@@ -321,7 +323,6 @@ class EntityManager
     #if server
     public function listen(address:String, port:Int)
     {
-        net = new NetEntityManager(this);
         net.listen(address, port);
         return net;
     }
@@ -578,7 +579,7 @@ class NetEntityManager extends Net
 
     public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        // DUMMY, ACTUALLY USED FOR SERVER BUT PREVENT ISSUES
+        // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
         // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
     }
     #end
