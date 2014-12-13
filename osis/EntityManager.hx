@@ -141,11 +141,13 @@ class EntityManager
 {
     var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
     var changes:Array<Change> = new Array();
+    var self:EntityManager;
     public var net:NetEntityManager;
 
     public function new()
     {
         this.net = new NetEntityManager(this);
+        this.self = this;
     }
 
     public function createEntity():Entity
@@ -306,9 +308,9 @@ class EntityManager
         return Reflect.field(this, type)();
     }
 
-    public function markChanged<T:CompTP>(entity:Entity, component:T)
+    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-        changes.push(new Change(entity, untyped component._id));
+        changes.push(new Change(entity, component._id));
     }
 
     // NET HELPERS
@@ -393,12 +395,14 @@ class NetEntityManager extends Net
     var entities:Map<Int, Entity> = new Map();
     var componentTypes:Array<Class<Component>> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
+    var eventListeners:Map<String, Dynamic->Void> = new Map();
 
     static inline var CREATE_ENTITY = 0;
     static inline var CREATE_TEMPLATE_ENTITY = 1;
     static inline var ADD_COMPONENT = 2;
     static inline var UPDATE_COMPONENT = 3;
     static inline var DESTROY_ENTITY = 4;
+    static inline var EVENT = 5;
 
     public function new(em:EntityManager)
     {
@@ -406,11 +410,19 @@ class NetEntityManager extends Net
 
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
         var components = podstream.SerializerMacro.getSerialized();
+        // for(component in components)
+        // {
+        //     trace("stringcomp " + component);
+        //     var c = Type.resolveClass(component);
+        //     componentTypes.push(cast c);
+        // }
+
         for(component in components)
         {
+            if(component == null) continue;
             trace("stringcomp " + component);
             var c = Type.resolveClass(component);
-            componentTypes.push(cast c);
+            componentTypes[(cast c).__id] = cast c;
         }
 
         // GET ENTITY FACTORY (MACRO)
@@ -420,11 +432,13 @@ class NetEntityManager extends Net
     //////////////// SERVER //////////////
     #if server
     public var entitiesByConnection:Map<Connection, Entity> = new Map();
+    public var connections:Map<Entity, Connection> = new Map();  // TEMP
 
     // USED WHEN DISCONNECTED FOR ENTITY DESTROY
     public function bindEntity(connection:anette.Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
+        connections.set(entity, connection);  // TEMP
     }
 
     public function getBoundEntity(connection:anette.Connection)
@@ -437,6 +451,7 @@ class NetEntityManager extends Net
     {
         // var templateId = templatesByString.get(name);
         var templateId = entityFactory.indexOf(name);
+        trace("wat " + name);
         if(templateId == -1) throw "The entity '${name}' doesn't exists";
 
         var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
@@ -524,10 +539,76 @@ class NetEntityManager extends Net
             component.serialize(connection.output);
         }
     }
+
+    override function onData(connection:Connection)
+    {
+        while(connection.input.mark - connection.input.position > 0)
+        {
+            var msgtype = connection.input.readInt8();
+            switch(msgtype)
+            {
+                case EVENT:
+                    receiveEvent(connection);
+            }
+        }
+    }
     #end
+
+    /// COMMON ///
+
+    function receiveEvent(connection:Connection)
+    {
+        // trace("EVENT");
+        var eventLength = connection.input.readInt8();
+        var eventName = connection.input.readString(eventLength);
+        var msgLength = connection.input.readInt16();
+        var msgSerialized = connection.input.readString(msgLength);
+        var msg:Dynamic = haxe.Unserializer.run(msgSerialized);
+
+        #if server
+        // msg.entity = entitiesByConnection.get(connection);
+        msg.connection = connection;
+        #end
+        var func = eventListeners.get(eventName);
+        if(func == null) throw "Not listener for event : " + eventName;
+        func(msg);
+    }
+
+    public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
+    {
+        #if server
+        if(connection != null)
+            _sendEvent(connection.output, haxe.Serializer.run(msg), name);
+        else
+            for(connection in socket.connections)
+                _sendEvent(connection.output, haxe.Serializer.run(msg), name);
+        #end
+        #if client
+            _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
+        #end
+    }
+
+    inline function _sendEvent(output:haxe.io.BytesOutput, serializedMsg:String,
+                                                                    name:String)
+    {
+        output.writeInt8(EVENT);
+        output.writeInt8(name.length);
+        output.writeString(name);
+        
+        output.writeInt16(serializedMsg.length);
+        output.writeString(serializedMsg);
+    }
+
+    public function registerEvent(name:String, func:Dynamic)
+    {
+        eventListeners.set(name, func);
+    }
 
     //////////////// CLIENT //////////////
     #if client
+    public function getEntity(entityId:Int):Entity
+        return entities.get(entityId);
+
     override function onData(connection:Connection)
     {
         while(connection.input.mark - connection.input.position > 0)
@@ -565,14 +646,20 @@ class NetEntityManager extends Net
                     var componentType = cast componentTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
+                    trace("plouf " + connection.input.length);
                     component.unserialize(connection.input);
+                    // trace("pim");
                     em.markChanged(entity, cast component);
+                    // trace("paf");
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
                     var templateId = connection.input.readInt8();
                     var entity = Reflect.field(em,'create' + entityFactory[templateId])();
                     entities.set(entityId, entity);
+
+                case EVENT:
+                    receiveEvent(connection);
             }
         }
     }

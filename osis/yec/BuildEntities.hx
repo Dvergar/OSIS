@@ -13,14 +13,15 @@ class BuildEntities
     static var entityFactory:Array<String> = new Array();
 
     #if macro
-    static public function _build(fields:Array<Field>):Array<Field>
+    static public function _build(fields:Array<Field>, pos):Array<Field>
     {
         var yamlPath = Context.definedValue("yamlpath");
         if(yamlPath == null)
             throw("You need to define your yaml path with
                   '-D yamlpath=your/yaml/path/'");
         var data:AnyObjectMap  = Yaml.read(yamlPath + "entities.yaml");
-        var pos = Context.currentPos();
+        // var pos = Context.currentPos();
+        // var fields:Array<Field> = Context.getBuildFields();
 
         for(entityName in data.keys())
         {
@@ -30,7 +31,10 @@ class BuildEntities
 
             // CREATE ENTITY
             block.push(macro trace("Create entity: " + $v{entityName}));
-            block.push(macro var entity = createEntity());
+            block.push(macro trace("func: " + this));
+            block.push(macro var entity = self.createEntity());
+            // throw((macro var entity = createEntity()));
+            block.push(macro trace("leld"));
 
             function buildEntity(component:AnyObjectMap, componentName:String)
             {
@@ -54,17 +58,18 @@ class BuildEntities
                 });
 
                 // ITERATE OVER COMPONENT VALUES
-                for(f in component.keys())
+                trace("comp " + component);
+                if(untyped component != "nope")  // Components can be tags & without vars
                 {
-                    var value = component.get(f);
-                    block.push(macro $i{instanceName}.$f = $v{value});
+                    for(varr in component.keys())
+                    {
+                        var value = component.get(varr);
+                        block.push(macro $i{instanceName}.$varr = $v{value});
+                    }
                 }
 
                 // ATTACH COMPONENT TO ENTITY
-                
-                block.push(macro trace("2"));
                 block.push(macro this.addComponent(entity, $i{instanceName}));
-                block.push(macro trace("3"));
             }
 
             for(componentName in entity.keys())

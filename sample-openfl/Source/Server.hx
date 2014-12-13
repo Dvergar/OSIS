@@ -14,6 +14,7 @@ class Server
         net = em.listen("192.168.1.4", 32000);
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
+        net.registerEvent("MESSAGE", onMessage);
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 
@@ -25,6 +26,11 @@ class Server
             });
         }
     }
+
+    function onMessage(o:Dynamic)
+    {
+        trace("o " + o.txt);
+    }
     
     function onConnection(connection:Connection)
     {
@@ -32,6 +38,7 @@ class Server
         var datPlayer = net.create("Player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
+        net.sendEvent("MESSAGE", {txt:"hello"});
     }
 
     function onDisconnection(conn:Connection)

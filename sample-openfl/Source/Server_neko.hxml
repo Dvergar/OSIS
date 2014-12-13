@@ -1,0 +1,13 @@
+-main Server.hx
+-cpp "D:\prog\#BUILDS\ecs\"
+
+-lib osis
+-lib polygonal-ds
+-lib yaml
+-lib podstream
+-lib anette
+-D server
+-D yamlpath=./
+-debug
+
+-cmd "D:\prog\#BUILDS\ecs\lol.exe"

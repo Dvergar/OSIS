@@ -21,8 +21,9 @@ class Builder
     {
         trace("wat");
         var fields:Array<Field> = Context.getBuildFields();
+        var pos = Context.currentPos();
         BuildComponents._build(fields);
-        BuildEntities._build(fields);
+        BuildEntities._build(fields, pos);
         // podstream._build(fields);
         return fields;
     }

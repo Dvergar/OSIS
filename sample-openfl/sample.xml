@@ -17,5 +17,6 @@
     <haxelib name="polygonal-ds" />
     <haxeflag name="-D yamlpath=Source\" />
     <haxedef name="client" />
+    <!-- <haxedef name="HXCPP" /> -->
     <assets path="Assets" rename="assets" />
 </project>

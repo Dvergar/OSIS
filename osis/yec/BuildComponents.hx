@@ -32,8 +32,8 @@ class BuildComponents
         var data:AnyObjectMap  = Yaml.read(yamlPath + "components.yaml");
 
         // ALLOWED TYPES
-        var allowedTypes = ["Int", "String", "Float"];
-        var allowedNetTypes = ["NetInt", "NetString", "NetFloat"];
+        var allowedTypes = ["Int", "String", "Float", "Bool"];
+        var allowedNetTypes = ["NetInt", "NetString", "NetFloat", "NetBool"];
 
         Context.defineType({
             pos: pos,
@@ -58,34 +58,35 @@ class BuildComponents
             trace("componentName " + componentName);
 
             // ITERATE FIELDS
-            for(f in component.keys())
-            {
-                var type = component.get(f);
-                var meta:Array<haxe.macro.MetadataEntry> = [];
-
-                trace("type |" + type + "|");
-
-                // CHECK IF TYPE EXISTS
-                if(!Lambda.has(allowedTypes, type) && !Lambda.has(allowedNetTypes, type))
-                    throw("Type not allowed: " + type);
-
-                // CHECK IF NET TYPE
-                if(Lambda.has(allowedNetTypes, type))
+            if(component != null)
+                for(f in component.keys())
                 {
-                    type = type.substr(3, type.length - 3);
-                    meta = [{ name: type, params: [], pos: pos }];
-                    trace("afternettype " + type);
+                    var type = component.get(f);
+                    var meta:Array<haxe.macro.MetadataEntry> = [];
+
+                    trace("type |" + type + "|");
+
+                    // CHECK IF TYPE EXISTS
+                    if(!Lambda.has(allowedTypes, type) && !Lambda.has(allowedNetTypes, type))
+                        throw("Type not allowed: " + type);
+
+                    // CHECK IF NET TYPE
+                    if(Lambda.has(allowedNetTypes, type))
+                    {
+                        type = type.substr(3, type.length - 3);
+                        meta = [{ name: type, params: [], pos: pos }];
+                        trace("afternettype " + type);
+                    }
+
+                    var tpath = TPath({name: type, pack: [], params: []});
+
+                    // BUILD FIELD
+                    compFields.push({kind: FVar(tpath, null),
+                                     meta: meta,
+                                     name: f,
+                                     pos: pos,
+                                     access: [APublic]});
                 }
-
-                var tpath = TPath({name: type, pack: [], params: []});
-
-                // BUILD FIELD
-                compFields.push({kind: FVar(tpath, null),
-                                 meta: meta,
-                                 name: f,
-                                 pos: pos,
-                                 access: [APublic]});
-            }
 
             compFields.push({kind: FFun({args: newArgs,
                                          expr: {expr: EBlock(block),

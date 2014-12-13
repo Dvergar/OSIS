@@ -77,14 +77,22 @@ class DrawableSystem extends System
 class Client
 {
     var em:EntityManager = new EntityManager();
+    var net:NetEntityManager;
 
     public function new()
     {
-        var net = em.connect("192.168.1.4", 32000);
+        net = em.connect("192.168.1.4", 32000);
+        net.registerEvent("MESSAGE", onMessage);
         em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
+    }
+
+    function onMessage(o:Dynamic)
+    {
+        trace("o " + o.txt);
+        net.sendEvent("MESSAGE", {txt:"hi"});
     }
 
     function loop(event:Event)
