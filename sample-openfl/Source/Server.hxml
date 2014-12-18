@@ -14,7 +14,7 @@
 -lib podstream
 -lib anette
 -D server
--D yamlpath=./
+# -D yamlpath=./
 -debug
 
 -cmd "neko D:\prog\#BUILDS\ecs.n"

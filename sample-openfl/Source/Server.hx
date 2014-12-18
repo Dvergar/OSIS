@@ -10,6 +10,7 @@ class Server
     public function new()
     {
         em = new EntityManager();
+        var ec = new EntityCreator(em);
         
         net = em.listen("192.168.1.4", 32000);
         net.onConnection = onConnection;
@@ -35,7 +36,7 @@ class Server
     function onConnection(connection:Connection)
     {
         trace("onConnection");
-        var datPlayer = net.create("Player");
+        var datPlayer = net.create("player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
         net.sendEvent("MESSAGE", {txt:"hello"});

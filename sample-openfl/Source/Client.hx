@@ -16,6 +16,14 @@ import osis.EntityManager;
 import Common;
 
 
+class CDrawable extends Component
+{
+    public var imageName:String;
+
+    public function new() {}
+}
+
+
 class DrawableSystem extends System
 {
     var sprites:Map<Int, Sprite> = new Map();
@@ -81,6 +89,7 @@ class Client
 
     public function new()
     {
+        var ec = new EntityCreator(em);
         net = em.connect("192.168.1.4", 32000);
         net.registerEvent("MESSAGE", onMessage);
         em.addSystem(new DrawableSystem());

@@ -1,6 +1,20 @@
 import osis.EntityManager;
 
 
+#if client
+import Client;
+#end
+
+
+class CPosition extends Component
+{
+    @Short public var x:Float = 0;
+    @Short public var y:Float = 0;
+
+    public function new() {}
+}
+
+
 class DummySystem extends System
 {
     public function new()
@@ -30,3 +44,28 @@ class MovementSystem extends System
     }
 }
 
+
+class EntityCreator
+{
+    var em:EntityManager;
+
+    public function new(em:EntityManager)
+    {
+        this.em = em;
+        em.registerTemplate("player", createPlayer);
+    }
+
+    public function createPlayer()
+    {
+        var entity = em.createEntity();
+        var pos = em.addComponent(entity, new CPosition());
+
+        #if client
+        var drawable = new CDrawable();
+        drawable.imageName = "soldier_idle.png";
+        em.addComponent(entity, drawable);
+        #end
+
+        return entity;
+    }
+}

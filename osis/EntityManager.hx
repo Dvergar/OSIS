@@ -42,6 +42,7 @@ typedef CompTP = {public var _id:Int;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
 
+@:autoBuild(podstream.SerializerMacro.build())
 class Component
 {
 }
@@ -134,20 +135,46 @@ class Change
 }
 
 
+class Template
+{
+    public static var ids:Int = 0;
+    public var id:Int;
+    public var name:String;
+    public var func:Void->Entity;
+
+    public function new(name:String)
+    {
+        this.id = Template.ids++;
+        this.name = name;
+    }
+}
+
+
 #if !macro
-@:build(osis.yec.Builder.build())
+// @:build(osis.yec.Builder.build())
 #end
 class EntityManager
 {
     var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
     var changes:Array<Change> = new Array();
     var self:EntityManager;
+    var templatesIds = 0;
+    public var templatesByName:Map<String, Template> = new Map();
+    public var templatesById:Map<Int, Template> = new Map();
     public var net:NetEntityManager;
 
     public function new()
     {
         this.net = new NetEntityManager(this);
         this.self = this;
+    }
+
+    public function registerTemplate(name:String, func:Void->Entity)
+    {
+        var template = new Template(name);
+        template.func = func;
+        templatesByName.set(name, template);
+        templatesById.set(template.id, template);
     }
 
     public function createEntity():Entity
@@ -420,13 +447,13 @@ class NetEntityManager extends Net
         for(component in components)
         {
             if(component == null) continue;
-            trace("stringcomp " + component);
             var c = Type.resolveClass(component);
-            componentTypes[(cast c).__id] = cast c;
+            componentTypes[cast(c).__sid] = cast c;
         }
 
-        // GET ENTITY FACTORY (MACRO)
-        entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
+        trace("componentTypes " + componentTypes);
+        // GET ENTITY FACTORY (MACRO) YAML
+        // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
     }
 
     //////////////// SERVER //////////////
@@ -447,15 +474,36 @@ class NetEntityManager extends Net
     }
 
     // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
+    // YAML
+    // public function create(name:String)
+    // {
+    //     // var templateId = templatesByString.get(name);
+    //     var templateId = entityFactory.indexOf(name);
+    //     trace("wat " + name);
+    //     if(templateId == -1) throw "The entity '${name}' doesn't exists";
+
+    //     var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
+    //     entity.templateId = templateId;
+
+    //     // SEND
+    //     for(connection in socket.connections)
+    //         sendCreate(connection.output, entity);
+
+    //     entities.set(entity.id, entity);
+
+    //     return entity;
+    // }
+
     public function create(name:String)
     {
         // var templateId = templatesByString.get(name);
-        var templateId = entityFactory.indexOf(name);
-        trace("wat " + name);
-        if(templateId == -1) throw "The entity '${name}' doesn't exists";
+        // var templateId = entityFactory.indexOf(name);
+        // trace("wat " + name);
+        // if(templateId == -1) throw "The entity '${name}' doesn't exists";
 
-        var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
-        entity.templateId = templateId;
+        var template = em.templatesByName.get(name);
+        var entity:Entity = template.func();
+        entity.templateId = template.id;
 
         // SEND
         for(connection in socket.connections)
@@ -645,6 +693,10 @@ class NetEntityManager extends Net
                     var componentTypeId = connection.input.readInt8();
                     var componentType = cast componentTypes[componentTypeId];
                     var entity = entities.get(entityId);
+                    trace("entity " + entity);
+                    trace("components " + entity.components);
+                    trace("componentTypeId " + componentTypeId);
+                    trace("componentTypes " + componentTypes);
                     var component = entity.get(componentType);
                     trace("plouf " + connection.input.length);
                     component.unserialize(connection.input);
@@ -655,7 +707,8 @@ class NetEntityManager extends Net
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
                     var templateId = connection.input.readInt8();
-                    var entity = Reflect.field(em,'create' + entityFactory[templateId])();
+                    // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
+                    var entity = em.templatesById.get(templateId).func();
                     entities.set(entityId, entity);
 
                 case EVENT:
