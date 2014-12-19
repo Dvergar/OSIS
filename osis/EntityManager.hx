@@ -37,7 +37,8 @@ class IdAssign
 }
 
 
-typedef CompTP = {public var _id:Int;
+typedef CompTP = {public var _sid:Int;
+                  public var _id:Int;
                   public function unserialize(bi:haxe.io.BytesInput):Void;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
@@ -99,6 +100,11 @@ class System
         }
     }
 
+    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
+    {
+        changes.push(new Change(entity, component._id, this));
+    }
+
     public function processEntity(entity:Entity)
     {
         // trace("processEntities");
@@ -126,11 +132,13 @@ class Change
 {
     public var entity:Entity;
     public var componentType:Int;
+    public var notSystem:System;
 
-    public function new(entity:Entity, componentType:Int)
+    public function new(entity:Entity, componentType:Int, notSystem:System)
     {
         this.entity = entity;
         this.componentType = componentType;
+        this.notSystem = notSystem;
     }
 }
 
@@ -273,6 +281,7 @@ class EntityManager
             {
                 if( (system.code | (1 << change.componentType) ) == system.code )
                 {
+                    if(system == change.notSystem) continue;
                     system.onEntityChange(change.entity);
                 }
             }
@@ -335,9 +344,9 @@ class EntityManager
         return Reflect.field(this, type)();
     }
 
-    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
+    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, notSystem:System)
     {
-        changes.push(new Change(entity, component._id));
+        changes.push(new Change(entity, component._id, notSystem));
     }
 
     // NET HELPERS
@@ -553,7 +562,7 @@ class NetEntityManager extends Net
         {
             connection.output.writeInt8(ADD_COMPONENT);
             connection.output.writeInt16(entity.id);
-            connection.output.writeInt8(component._id);
+            connection.output.writeInt8(component._sid);
             component.serialize(connection.output);
         }
 
@@ -577,13 +586,13 @@ class NetEntityManager extends Net
 
     public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        em.markChanged(entity, component);
+        // em.markChanged(entity, component);
 
         for(connection in socket.connections)
         {
             connection.output.writeInt8(UPDATE_COMPONENT);
             connection.output.writeInt16(entity.id);
-            connection.output.writeInt8(component._id);
+            connection.output.writeInt8(component._sid);
             component.serialize(connection.output);
         }
     }
@@ -693,16 +702,9 @@ class NetEntityManager extends Net
                     var componentTypeId = connection.input.readInt8();
                     var componentType = cast componentTypes[componentTypeId];
                     var entity = entities.get(entityId);
-                    trace("entity " + entity);
-                    trace("components " + entity.components);
-                    trace("componentTypeId " + componentTypeId);
-                    trace("componentTypes " + componentTypes);
                     var component = entity.get(componentType);
-                    trace("plouf " + connection.input.length);
                     component.unserialize(connection.input);
-                    // trace("pim");
                     em.markChanged(entity, cast component);
-                    // trace("paf");
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
