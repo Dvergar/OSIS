@@ -341,13 +341,14 @@ class EntityManager
     }
 
     // NEEDED HERE TO PREVENT REFLECTION HELL
-    @:allow(NetEntityManager)
-    public function createFactoryEntity(type:String):Entity
+    @:allow(osis.NetEntityManager)
+    function createFactoryEntity(type:String):Entity
     {
         return Reflect.field(this, type)();
     }
 
-    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
+    @:allow(osis.NetEntityManager)
+    function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
     // public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
         changes.push(new Change(entity, component._id, notSystem));
@@ -380,8 +381,8 @@ class Net
 
     #if server
     public var socket:Server;
-    @:allow(EntityManager)
-    public function listen(address:String, port:Int)
+    @:allow(osis.EntityManager)
+    function listen(address:String, port:Int)
     {
         socket = new Server(address, port);
         socket.protocol = new Prefixed();
@@ -393,8 +394,8 @@ class Net
 
     #elseif client
     public var socket:Client;
-    @:allow(EntityManager)
-    public function connect(address:String, port:Int)
+    @:allow(osis.EntityManager)
+    function connect(address:String, port:Int)
     {
         socket = new Client();
         socket.protocol = new Prefixed();
@@ -731,8 +732,8 @@ class NetEntityManager extends Net
     }
     #end
 
-    @:allow(EntityManager)
-    public function pump()
+    @:allow(osis.EntityManager)
+    function pump()
     {
         if(socket != null)
         {
