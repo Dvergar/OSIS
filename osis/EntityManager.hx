@@ -83,6 +83,7 @@ class Entity
     }
 }
 
+
 typedef SystemTP = {> System, _id: Int}
 @:autoBuild(osis.IdAssign.build())
 class System
@@ -102,7 +103,8 @@ class System
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-        changes.push(new Change(entity, component._id, this));
+        em.changes.push(new Change(entity, component._id, this));
+        // em.changes.push(new Change(entity, component._id));
     }
 
     public function processEntity(entity:Entity)
@@ -135,6 +137,7 @@ class Change
     public var notSystem:System;
 
     public function new(entity:Entity, componentType:Int, notSystem:System)
+    // public function new(entity:Entity, componentType:Int)
     {
         this.entity = entity;
         this.componentType = componentType;
@@ -164,7 +167,7 @@ class Template
 class EntityManager
 {
     var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
-    var changes:Array<Change> = new Array();
+    public var changes:Array<Change> = new Array();
     var self:EntityManager;
     var templatesIds = 0;
     public var templatesByName:Map<String, Template> = new Map();
@@ -344,9 +347,11 @@ class EntityManager
         return Reflect.field(this, type)();
     }
 
-    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, notSystem:System)
+    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
+    // public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
         changes.push(new Change(entity, component._id, notSystem));
+        // changes.push(new Change(entity, component._id));
     }
 
     // NET HELPERS
@@ -628,7 +633,7 @@ class NetEntityManager extends Net
         #end
         var func = eventListeners.get(eventName);
         if(func == null) throw "Not listener for event : " + eventName;
-        func(msg);
+        func(cast msg);
     }
 
     public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)

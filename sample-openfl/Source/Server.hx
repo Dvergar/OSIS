@@ -12,7 +12,7 @@ class Server
         em = new EntityManager();
         var ec = new EntityCreator(em);
         
-        net = em.listen("192.168.1.4", 32000);
+        net = em.listen("127.0.0.1", 32000);
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
         net.registerEvent("MESSAGE", onMessage);

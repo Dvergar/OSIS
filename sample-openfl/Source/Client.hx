@@ -90,7 +90,7 @@ class Client
     public function new()
     {
         var ec = new EntityCreator(em);
-        net = em.connect("192.168.1.4", 32000);
+        net = em.connect("127.0.0.1", 32000);
         net.registerEvent("MESSAGE", onMessage);
         em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
