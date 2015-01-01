@@ -15,8 +15,7 @@ class Server
         net = em.listen("127.0.0.1", 32000);
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
-        net.registerEvent("MESSAGE", onMessage);
-        net.registerEvent2(MessageHello, onMessage2);
+        net.registerEvent(MessageHello, onMessage);
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 
@@ -29,16 +28,9 @@ class Server
         }
     }
 
-    function onMessage(o:Dynamic)
+    function onMessage(msg:MessageHello)
     {
-        trace("o " + o.txt);
-    }
-
-    function onMessage2(msg:MessageHello)
-    {
-        trace("onMessage2");
-        trace("msggg " + msg.txt);
-        // trace("o " + o.txt);
+        trace("Message " + msg.txt);
     }
     
     function onConnection(connection:Connection)
@@ -47,7 +39,10 @@ class Server
         var datPlayer = net.create("player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
-        net.sendEvent("MESSAGE", {txt:"hello"});
+        
+        var msg = new MessageHello();
+        msg.txt = "youhou";
+        net.sendEvent(msg);
     }
 
     function onDisconnection(conn:Connection)

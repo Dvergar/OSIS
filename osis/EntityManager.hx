@@ -458,8 +458,7 @@ class NetEntityManager extends Net
     var entities:Map<Int, Entity> = new Map();
     var serializableTypes:Array<Class<Component>> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
-    var eventListeners:Map<String, Dynamic->Void> = new Map();
-    var eventListeners2:Map<Int, EventContainer> = new Map();
+    var eventListeners:Map<Int, EventContainer> = new Map();
 
     static inline var CREATE_ENTITY = 0;
     static inline var CREATE_TEMPLATE_ENTITY = 1;
@@ -628,13 +627,9 @@ class NetEntityManager extends Net
             var msgtype = connection.input.readInt8();
             switch(msgtype)
             {
-                case EVENT:
-                    receiveEvent(connection);
-
                 case EVENT2:
                     var messageTypeId = connection.input.readInt8();
-                    // var messageType = cast serializableTypes[componentTypeId];
-                    receiveEvent2(messageTypeId, connection);
+                    receiveEvent(messageTypeId, connection);
             }
         }
     }
@@ -642,98 +637,41 @@ class NetEntityManager extends Net
 
     /// COMMON ///
 
-    function receiveEvent(connection:Connection)
+    function receiveEvent(messageTypeId:Int, connection:Connection)
     {
-        trace("receiveEvent");
-        var eventLength = connection.input.readInt8();
-        var eventName = connection.input.readString(eventLength);
-        var msgLength = connection.input.readInt16();
-        var msgSerialized = connection.input.readString(msgLength);
-        var msg:Dynamic = haxe.Unserializer.run(msgSerialized);
-
-        #if server
-        // msg.entity = entitiesByConnection.get(connection);
-        msg.connection = connection;
-        #end
-        var func = eventListeners.get(eventName);
-        if(func == null) throw "Not listener for event : " + eventName;
-        func(cast msg);
-    }
-
-    function receiveEvent2(messageTypeId:Int, connection:Connection)
-    {
-        var eventContainer:EventContainer = eventListeners2.get(messageTypeId);
+        var eventContainer:EventContainer = eventListeners.get(messageTypeId);
         eventContainer.message.unserialize(connection.input);
         eventContainer.func(cast eventContainer.message);
     }
 
-    public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
-    {
-        #if server
-            if(connection != null)
-                _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-            else
-                for(connection in socket.connections)
-                    _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-        #end
-        #if client
-            _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
-        #end
-    }
-
-    inline function _sendEvent(output:haxe.io.BytesOutput, serializedMsg:String,
-                                                                    name:String)
-    {
-        output.writeInt8(EVENT);
-        output.writeInt8(name.length);
-        output.writeString(name);
-        
-        output.writeInt16(serializedMsg.length);
-        output.writeString(serializedMsg);
-    }
-
-    public function sendEvent2(message:IMessage, ?connection:Connection)
+    public function sendEvent(message:IMessage, ?connection:Connection)
     {
         #if server
         if(connection != null)
-            _sendEvent2(connection.output, message);
+            _sendEvent(connection.output, message);
         else
             for(connection in socket.connections)
-                _sendEvent2(connection.output, message);
+                _sendEvent(connection.output, message);
         #end
         #if client
-            _sendEvent2(socket.connection.output, message);
+            _sendEvent(socket.connection.output, message);
         #end
     }
 
-    inline function _sendEvent2(output:haxe.io.BytesOutput, message:IMessage)
+    inline function _sendEvent(output:haxe.io.BytesOutput, message:IMessage)
     {
         output.writeInt8(EVENT2);
         output.writeInt8(message._sid);
         message.serialize(output);
-        trace("_sendEvent2");
-
-        // output.writeInt8(name.length);
-        // output.writeString(name);
-        
-        // output.writeInt16(serializedMsg.length);
-        // output.writeString(serializedMsg);
     }
 
-    public function registerEvent(name:String, func:Dynamic)
-    {
-        eventListeners.set(name, func);
-    }
-
-    public function registerEvent2(messageClass:Class<IMessage>, func:Dynamic)
+    public function registerEvent(messageClass:Class<IMessage>, func:Dynamic)
     {
         var event = new EventContainer();
         event.message = Type.createInstance(messageClass, []);
         event.func = func;
 
-        trace("messagein " +  event.message);
-
-        eventListeners2.set(event.message._sid, event);
+        eventListeners.set(event.message._sid, event);
     }
 
     //////////////// CLIENT //////////////
@@ -784,8 +722,7 @@ class NetEntityManager extends Net
                 case EVENT2:
                     trace("EVENT2");
                     var messageTypeId = connection.input.readInt8();
-                    // var messageType = cast serializableTypes[componentTypeId];
-                    receiveEvent2(messageTypeId, connection);
+                    receiveEvent(messageTypeId, connection);
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
@@ -793,10 +730,6 @@ class NetEntityManager extends Net
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
                     var entity = em.templatesById.get(templateId).func();
                     entities.set(entityId, entity);
-
-                case EVENT:
-                    trace("EVENT");
-                    receiveEvent(connection);
             }
         }
     }

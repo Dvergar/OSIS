@@ -91,22 +91,20 @@ class Client
     {
         var ec = new EntityCreator(em);
         net = em.connect("127.0.0.1", 32000);
-        net.registerEvent("MESSAGE", onMessage);
+        net.registerEvent(MessageHello, onMessage);
         em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
 
-    function onMessage(o:Dynamic)
+    function onMessage(msg:MessageHello)
     {
+        trace("Message: " + msg.txt);
+
         var msg = new MessageHello();
         msg.txt = "coucou";
-        net.sendEvent2(msg);
-        
-        trace("o " + o.txt);
-        net.sendEvent("MESSAGE", {txt:"hi"});
-
+        net.sendEvent(msg);
     }
 
     function loop(event:Event)
