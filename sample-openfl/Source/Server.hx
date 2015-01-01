@@ -16,6 +16,7 @@ class Server
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
         net.registerEvent("MESSAGE", onMessage);
+        net.registerEvent2(MessageHello, onMessage2);
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 
@@ -31,6 +32,13 @@ class Server
     function onMessage(o:Dynamic)
     {
         trace("o " + o.txt);
+    }
+
+    function onMessage2(msg:MessageHello)
+    {
+        trace("onMessage2");
+        trace("msggg " + msg.txt);
+        // trace("o " + o.txt);
     }
     
     function onConnection(connection:Connection)

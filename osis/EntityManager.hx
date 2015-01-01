@@ -48,6 +48,20 @@ class Component
 {
 }
 
+// @:autoBuild(podstream.SerializerMacro.build())
+// class Message
+// {
+// }
+
+@:autoBuild(podstream.SerializerMacro.build())
+interface IMessage
+{
+    public var _sid:Int;
+    public var _id:Int;
+    public function unserialize(bi:haxe.io.BytesInput):Void;
+    public function serialize(bo:haxe.io.BytesOutput):Void;
+}
+
 
 class Entity
 {
@@ -430,14 +444,22 @@ class Net
     }
 }
 
+class EventContainer
+{
+    public var message:IMessage;
+    public var func:Dynamic->Void;
+
+    public function new() {}
+}
 
 class NetEntityManager extends Net
 {
     var em:EntityManager;
     var entities:Map<Int, Entity> = new Map();
-    var componentTypes:Array<Class<Component>> = new Array();
+    var serializableTypes:Array<Class<Component>> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
     var eventListeners:Map<String, Dynamic->Void> = new Map();
+    var eventListeners2:Map<Int, EventContainer> = new Map();
 
     static inline var CREATE_ENTITY = 0;
     static inline var CREATE_TEMPLATE_ENTITY = 1;
@@ -445,28 +467,24 @@ class NetEntityManager extends Net
     static inline var UPDATE_COMPONENT = 3;
     static inline var DESTROY_ENTITY = 4;
     static inline var EVENT = 5;
+    static inline var EVENT2 = 6;
 
     public function new(em:EntityManager)
     {
         this.em = em;
 
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
-        var components = podstream.SerializerMacro.getSerialized();
-        // for(component in components)
-        // {
-        //     trace("stringcomp " + component);
-        //     var c = Type.resolveClass(component);
-        //     componentTypes.push(cast c);
-        // }
+        var serializables = podstream.SerializerMacro.getSerialized();
 
-        for(component in components)
+        for(serializable in serializables)
         {
-            if(component == null) continue;
-            var c = Type.resolveClass(component);
-            componentTypes[cast(c).__sid] = cast c;
+            if(serializable == null) continue;
+            var c = Type.resolveClass(serializable);
+            serializableTypes[cast(c).__sid] = cast c;
         }
 
-        trace("componentTypes " + componentTypes);
+        trace("componentTypes " + serializableTypes);
+
         // GET ENTITY FACTORY (MACRO) YAML
         // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
     }
@@ -612,6 +630,11 @@ class NetEntityManager extends Net
             {
                 case EVENT:
                     receiveEvent(connection);
+
+                case EVENT2:
+                    var messageTypeId = connection.input.readInt8();
+                    // var messageType = cast serializableTypes[componentTypeId];
+                    receiveEvent2(messageTypeId, connection);
             }
         }
     }
@@ -621,7 +644,7 @@ class NetEntityManager extends Net
 
     function receiveEvent(connection:Connection)
     {
-        // trace("EVENT");
+        trace("receiveEvent");
         var eventLength = connection.input.readInt8();
         var eventName = connection.input.readString(eventLength);
         var msgLength = connection.input.readInt16();
@@ -637,14 +660,21 @@ class NetEntityManager extends Net
         func(cast msg);
     }
 
+    function receiveEvent2(messageTypeId:Int, connection:Connection)
+    {
+        var eventContainer:EventContainer = eventListeners2.get(messageTypeId);
+        eventContainer.message.unserialize(connection.input);
+        eventContainer.func(cast eventContainer.message);
+    }
+
     public function sendEvent(name:String, msg:Dynamic, ?connection:Connection)
     {
         #if server
-        if(connection != null)
-            _sendEvent(connection.output, haxe.Serializer.run(msg), name);
-        else
-            for(connection in socket.connections)
+            if(connection != null)
                 _sendEvent(connection.output, haxe.Serializer.run(msg), name);
+            else
+                for(connection in socket.connections)
+                    _sendEvent(connection.output, haxe.Serializer.run(msg), name);
         #end
         #if client
             _sendEvent(socket.connection.output, haxe.Serializer.run(msg), name);
@@ -662,9 +692,48 @@ class NetEntityManager extends Net
         output.writeString(serializedMsg);
     }
 
+    public function sendEvent2(message:IMessage, ?connection:Connection)
+    {
+        #if server
+        if(connection != null)
+            _sendEvent2(connection.output, message);
+        else
+            for(connection in socket.connections)
+                _sendEvent2(connection.output, message);
+        #end
+        #if client
+            _sendEvent2(socket.connection.output, message);
+        #end
+    }
+
+    inline function _sendEvent2(output:haxe.io.BytesOutput, message:IMessage)
+    {
+        output.writeInt8(EVENT2);
+        output.writeInt8(message._sid);
+        message.serialize(output);
+        trace("_sendEvent2");
+
+        // output.writeInt8(name.length);
+        // output.writeString(name);
+        
+        // output.writeInt16(serializedMsg.length);
+        // output.writeString(serializedMsg);
+    }
+
     public function registerEvent(name:String, func:Dynamic)
     {
         eventListeners.set(name, func);
+    }
+
+    public function registerEvent2(messageClass:Class<IMessage>, func:Dynamic)
+    {
+        var event = new EventContainer();
+        event.message = Type.createInstance(messageClass, []);
+        event.func = func;
+
+        trace("messagein " +  event.message);
+
+        eventListeners2.set(event.message._sid, event);
     }
 
     //////////////// CLIENT //////////////
@@ -697,7 +766,7 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     var entity = entities.get(entityId);
                     var componentTypeId = connection.input.readInt8();
-                    var componentType = cast componentTypes[componentTypeId];
+                    var componentType = cast serializableTypes[componentTypeId];
                     var component:CompTP = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
                     em.addComponent(entity, component);
@@ -706,11 +775,17 @@ class NetEntityManager extends Net
                     // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
-                    var componentType = cast componentTypes[componentTypeId];
+                    var componentType = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
                     component.unserialize(connection.input);
                     em.markChanged(entity, cast component);
+
+                case EVENT2:
+                    trace("EVENT2");
+                    var messageTypeId = connection.input.readInt8();
+                    // var messageType = cast serializableTypes[componentTypeId];
+                    receiveEvent2(messageTypeId, connection);
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
@@ -720,6 +795,7 @@ class NetEntityManager extends Net
                     entities.set(entityId, entity);
 
                 case EVENT:
+                    trace("EVENT");
                     receiveEvent(connection);
             }
         }

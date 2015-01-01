@@ -100,8 +100,13 @@ class Client
 
     function onMessage(o:Dynamic)
     {
+        var msg = new MessageHello();
+        msg.txt = "coucou";
+        net.sendEvent2(msg);
+        
         trace("o " + o.txt);
         net.sendEvent("MESSAGE", {txt:"hi"});
+
     }
 
     function loop(event:Event)
