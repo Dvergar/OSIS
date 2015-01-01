@@ -30,7 +30,7 @@ class Server
 
     function onMessage(msg:MessageHello)
     {
-        trace("Message " + msg.txt);
+        trace("Message: " + msg.txt);
     }
     
     function onConnection(connection:Connection)
@@ -39,7 +39,7 @@ class Server
         var datPlayer = net.create("player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
-        
+
         var msg = new MessageHello();
         msg.txt = "youhou";
         net.sendEvent(msg);

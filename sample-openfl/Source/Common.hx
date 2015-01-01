@@ -6,7 +6,7 @@ import Client;
 #end
 
 
-@:autoBuild(podstream.SerializerMacro.build())
+
 class MessageHello implements IMessage
 {
     @String public var txt:String;
@@ -16,7 +16,7 @@ class MessageHello implements IMessage
 }
 
 
-class CPosition extends Component
+class CPosition implements Component
 {
     @Short public var x:Float = 0;
     @Short public var y:Float = 0;

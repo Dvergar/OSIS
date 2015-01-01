@@ -16,7 +16,7 @@ import osis.EntityManager;
 import Common;
 
 
-class CDrawable extends Component
+class CDrawable implements Component
 {
     public var imageName:String;
 

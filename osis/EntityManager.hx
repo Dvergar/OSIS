@@ -44,14 +44,10 @@ typedef CompTP = {public var _sid:Int;
 
 
 @:autoBuild(podstream.SerializerMacro.build())
-class Component
+interface Component
 {
 }
 
-// @:autoBuild(podstream.SerializerMacro.build())
-// class Message
-// {
-// }
 
 @:autoBuild(podstream.SerializerMacro.build())
 interface IMessage
@@ -505,8 +501,8 @@ class NetEntityManager extends Net
         return entitiesByConnection.get(connection);
     }
 
-    // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
     // YAML
+    // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
     // public function create(name:String)
     // {
     //     // var templateId = templatesByString.get(name);
@@ -528,6 +524,7 @@ class NetEntityManager extends Net
 
     public function create(name:String)
     {
+        // YAML
         // var templateId = templatesByString.get(name);
         // var templateId = entityFactory.indexOf(name);
         // trace("wat " + name);
@@ -553,6 +550,7 @@ class NetEntityManager extends Net
         output.writeInt8(entity.templateId);
     }
 
+    // MIGHT BE USEFUL AT SOME POINT
     // public function createEntity()
     // {
     //     var entity = em.createEntity();
