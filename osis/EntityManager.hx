@@ -44,9 +44,7 @@ typedef CompTP = {public var _sid:Int;
 
 
 @:autoBuild(podstream.SerializerMacro.build())
-interface Component
-{
-}
+interface Component {}
 
 
 @:autoBuild(podstream.SerializerMacro.build())
@@ -94,7 +92,7 @@ class Entity
 }
 
 
-typedef SystemTP = {> System, _id: Int}
+typedef SystemToAccessThatDamn_id = {> System, _id: Int}
 @:autoBuild(osis.IdAssign.build())
 class System
 {
@@ -172,14 +170,15 @@ class Template
 
 
 #if !macro
+// YAML
 // @:build(osis.yec.Builder.build())
 #end
 class EntityManager
 {
-    var systems:haxe.ds.IntMap<SystemTP> = new haxe.ds.IntMap();
-    public var changes:Array<Change> = new Array();
+    var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
     var self:EntityManager;
     var templatesIds = 0;
+    public var changes:Array<Change> = new Array();
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Map<Int, Template> = new Map();
     public var net:NetEntityManager;
@@ -350,12 +349,13 @@ class EntityManager
         if(loops > maxFrameSkip) throw "out of fixed timestep";
     }
 
+    // YAML
     // NEEDED HERE TO PREVENT REFLECTION HELL
-    @:allow(osis.NetEntityManager)
-    function createFactoryEntity(type:String):Entity
-    {
-        return Reflect.field(this, type)();
-    }
+    // @:allow(osis.NetEntityManager)
+    // function createFactoryEntity(type:String):Entity
+    // {
+    //     return Reflect.field(this, type)();
+    // }
 
     @:allow(osis.NetEntityManager)
     function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
@@ -725,6 +725,7 @@ class NetEntityManager extends Net
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
                     var templateId = connection.input.readInt8();
+                    // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
                     var entity = em.templatesById.get(templateId).func();
                     entities.set(entityId, entity);
