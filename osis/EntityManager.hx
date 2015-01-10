@@ -160,6 +160,7 @@ class Template
     public var id:Int;
     public var name:String;
     public var func:Void->Entity;
+    public var code:Int;
 
     public function new(name:String)
     {
@@ -195,6 +196,12 @@ class EntityManager
         template.func = func;
         templatesByName.set(name, template);
         templatesById.set(template.id, template);
+
+        // GET CODE
+        // template.code = 1;
+        var entity = func();
+        template.code = entity.code;
+        destroyEntity(entity);
     }
 
     public function createEntity():Entity
@@ -214,7 +221,7 @@ class EntityManager
         }
     }
 
-    public function addComponent<T>(entity:Entity, component:T, ?sync:Bool):T
+    public function addComponent<T>(entity:Entity, component:T):T
     {
         entity.components[(untyped component)._id] = cast component;
         entity.code = entity.code | (1 << (untyped component)._id);
@@ -234,6 +241,9 @@ class EntityManager
                 entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << system._id);
             }
         }
+
+        trace("addcomponent " + component);
+        trace("entitycodeadd " + entity.code);
 
         return component;
     }
@@ -265,6 +275,9 @@ class EntityManager
                 entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << system._id);
             }
         }
+
+        trace("remcomponent " + componentId);
+        trace("entitycoderem " + entity.code);
         
         entity.components[componentId] = null;
     }
@@ -289,14 +302,24 @@ class EntityManager
         for(change in changes)
         {
             // TODO: iterate over entity.registeredSystemsCode instead
-            for(system in systems)
+            for(i in 0...32)
             {
-                if( (system.code | (1 << change.componentType) ) == system.code )
+                var system = systems.get(i);
+                if( (change.entity.registeredSystemsCode & 1 << i) != 0)
                 {
                     if(system == change.notSystem) continue;
                     system.onEntityChange(change.entity);
                 }
             }
+
+            // for(system in systems)
+            // {
+            //     if( (system.code | (1 << change.componentType) ) == system.code )
+            //     {
+            //         if(system == change.notSystem) continue;
+            //         system.onEntityChange(change.entity);
+            //     }
+            // }
         }
 
         changes = new Array();
@@ -451,7 +474,7 @@ class EventContainer
 class NetEntityManager extends Net
 {
     var em:EntityManager;
-    var entities:Map<Int, Entity> = new Map();
+    public var entities:Map<Int, Entity> = new Map();
     var serializableTypes:Array<Class<Component>> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
     var eventListeners:Map<Int, EventContainer> = new Map();
@@ -460,9 +483,10 @@ class NetEntityManager extends Net
     static inline var CREATE_TEMPLATE_ENTITY = 1;
     static inline var ADD_COMPONENT = 2;
     static inline var UPDATE_COMPONENT = 3;
-    static inline var DESTROY_ENTITY = 4;
-    static inline var EVENT = 5;
-    static inline var EVENT2 = 6;
+    static inline var REMOVE_COMPONENT = 4;
+    static inline var DESTROY_ENTITY = 5;
+    static inline var EVENT = 6;
+    static inline var EVENT2 = 7;
 
     public function new(em:EntityManager)
     {
@@ -529,7 +553,7 @@ class NetEntityManager extends Net
         // var templateId = entityFactory.indexOf(name);
         // trace("wat " + name);
         // if(templateId == -1) throw "The entity '${name}' doesn't exists";
-
+        trace("ezoirj " + em.templatesByName);
         var template = em.templatesByName.get(name);
         var entity:Entity = template.func();
         entity.templateId = template.id;
@@ -577,18 +601,35 @@ class NetEntityManager extends Net
         entities.remove(entity.id);
     }
 
+    inline function sendAddComponent<T:CompTP>(entityId:Int, component:T, connection:Connection)
+    {
+        connection.output.writeInt8(ADD_COMPONENT);
+        connection.output.writeInt16(entityId);
+        connection.output.writeInt8(component._sid);
+        component.serialize(connection.output);
+    }
+
     public function addComponent<T:CompTP>(entity:Entity, component:T):T
     {
         for(connection in socket.connections)
-        {
-            connection.output.writeInt8(ADD_COMPONENT);
-            connection.output.writeInt16(entity.id);
-            connection.output.writeInt8(component._sid);
-            component.serialize(connection.output);
-        }
+            sendAddComponent(entity.id, component, connection);
 
         em.addComponent(entity, component);
         return cast component;
+    }
+
+    inline function sendRemoveComponent(entityId:Int, componentId:Int, connection:Connection)
+    {
+        connection.output.writeInt8(REMOVE_COMPONENT);
+        connection.output.writeInt16(entityId);
+        connection.output.writeInt8(componentId);
+    }
+
+    public function removeComponentOfType<T:{__sid:Int}>(entity:Entity, componentType:T)
+    {
+        for(connection in socket.connections)
+            sendRemoveComponent(entity.id, componentType.__sid, connection);
+        em.removeComponentOfType(entity, cast componentType);
     }
 
     public function sendWorldStateTo(connection:Connection)
@@ -601,7 +642,33 @@ class NetEntityManager extends Net
         for(entity in entities)
         {
             if(entity == connectionEntity) continue;
+            trace("sendentity " + entity);
             sendCreate(connection.output, entity);
+            var templateCode = em.templatesById.get(entity.templateId).code;
+            var deltaCode = entity.code ^ templateCode;
+            trace("entitycode " + entity.code);
+            trace("templateCode " + templateCode);
+            for(pos in 0...32)
+            {
+                var deltaBit = deltaCode & (1 << pos);
+                trace("deltacode " + deltaCode);
+                trace("gnn " + (1 << pos));
+                if(deltaBit != 0)  // CHANGE
+                {
+                    trace("CHANGE");
+                    var addBit = entity.code & (1 << pos);
+                    if(addBit != 0)  // ADD
+                    {
+                        trace("ADD");
+                        sendAddComponent(entity.id, cast entity.components[pos], connection);
+                    }
+                    else
+                    {
+                        sendRemoveComponent(entity.id, pos, connection);
+                        trace("REMOVE");
+                    }
+                }
+            }
         }
     }
 
@@ -682,6 +749,7 @@ class NetEntityManager extends Net
         while(connection.input.mark - connection.input.position > 0)
         {
             var msgtype = connection.input.readInt8();
+            // trace("msgtype " + msgtype);
             switch(msgtype)
             {
                 case CREATE_ENTITY:
@@ -707,6 +775,15 @@ class NetEntityManager extends Net
                     component.unserialize(connection.input);
                     em.addComponent(entity, component);
 
+                case REMOVE_COMPONENT:
+                    trace("REMOVE_COMPONENT");
+                    var entityId = connection.input.readInt16();
+                    var componentTypeId = connection.input.readInt8();
+                    var componentType = cast serializableTypes[componentTypeId];
+                    var entity = entities.get(entityId);
+                    var component = entity.get(componentType);
+                    em.removeComponent(entity, component);
+
                 case UPDATE_COMPONENT:
                     // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
@@ -724,6 +801,7 @@ class NetEntityManager extends Net
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
+                    trace("CREATE_TEMPLATE_ENTITY " + entityId);
                     var templateId = connection.input.readInt8();
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML

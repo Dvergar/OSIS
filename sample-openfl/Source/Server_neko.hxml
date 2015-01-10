@@ -1,7 +1,7 @@
 # -cmd "haxelib run protohx generate protohx.json"
 
 -main Server.hx
--neko "C:\Prog\#BUILDS\ecs.n"
+-neko "D:\Prog\#BUILDS\ecs.n"
 # -cp ../../libs/anette/src/
 # -cp ../../libs/polygonal-ds/src/
 # -cp ../../libs/polygonal-printf/src/
@@ -17,4 +17,4 @@
 # -D yamlpath=./
 -debug
 
--cmd "neko C:\Prog\#BUILDS\ecs.n"
+-cmd "neko D:\Prog\#BUILDS\ecs.n"

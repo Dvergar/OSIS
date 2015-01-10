@@ -10,6 +10,7 @@ import Client;
 class MessageHello implements IMessage
 {
     @String public var txt:String;
+    @Short public var entityId:Int = -1;
 
     public function new() {}
 
@@ -20,6 +21,13 @@ class CPosition implements Component
 {
     @Short public var x:Float = 0;
     @Short public var y:Float = 0;
+
+    public function new() {}
+}
+
+class CTest implements Component
+{
+    @Short public var z:Float = 0;
 
     public function new() {}
 }
@@ -69,6 +77,7 @@ class EntityCreator
     {
         var entity = em.createEntity();
         var pos = em.addComponent(entity, new CPosition());
+        // em.addComponent(entity, new CTest());
 
         #if client
         var drawable = new CDrawable();

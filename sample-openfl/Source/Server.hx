@@ -39,10 +39,20 @@ class Server
         var datPlayer = net.create("player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
+        trace("datplayer ID " + datPlayer.id);
 
         var msg = new MessageHello();
         msg.txt = "youhou";
+        msg.entityId = datPlayer.id;
         net.sendEvent(msg);
+
+        net.addComponent(datPlayer, new CTest());
+
+        // DEBUG
+        // if(datPlayer.id == 1)
+        // {
+        //     net.removeComponentOfType(datPlayer, CPosition);
+        // }
     }
 
     function onDisconnection(conn:Connection)

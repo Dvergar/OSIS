@@ -82,6 +82,46 @@ class DrawableSystem extends System
 }
 
 
+class DebugSystem extends System
+{
+    var labels:Map<Int, flash.text.TextField> = new Map();
+
+    public function new()
+    {
+        need([CTest, CPosition]);
+    }
+
+    public override function onEntityAdded(entity:Entity)
+    {
+        trace("ondebug added");
+        var pos = entity.get(CPosition);
+        var label = new flash.text.TextField();
+        label.textColor = 0xFF0000;
+        label.x = pos.x;
+        label.y = pos.y + 80;
+        label.text = "boom boom";
+        Lib.current.addChild(label);
+        labels.set(entity.id, label);
+    }
+
+    public override function onEntityRemoved(entity:Entity)
+    {
+        var label = labels.get(entity.id);
+        Lib.current.removeChild(label);
+        labels.remove(entity.id);
+    }
+
+    public override function onEntityChange(entity:Entity)
+    {
+        var pos = entity.get(CPosition);
+        var label = labels.get(entity.id);
+
+        label.x = pos.x;
+        label.y = pos.y + 80;
+    }
+}
+
+
 class Client
 {
     var em:EntityManager = new EntityManager();
@@ -94,6 +134,7 @@ class Client
         net.registerEvent(MessageHello, onMessage);
         em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
+        em.addSystem(new DebugSystem());
 
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
@@ -101,6 +142,10 @@ class Client
     function onMessage(msg:MessageHello)
     {
         trace("Message: " + msg.txt);
+        trace("Entity id: " + msg.entityId);
+
+        var entity = net.entities.get(msg.entityId);
+        trace("ctest " + entity.has(CTest));
 
         var msg = new MessageHello();
         msg.txt = "coucou";
