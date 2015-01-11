@@ -139,7 +139,7 @@ class Client
         Lib.current.stage.addEventListener(Event.ENTER_FRAME, loop);
     }
 
-    function onMessage(msg:MessageHello)
+    function onMessage(msg:MessageHello, connection:Connection)
     {
         trace("Message: " + msg.txt);
         trace("Entity id: " + msg.entityId);

@@ -28,7 +28,7 @@ class Server
         }
     }
 
-    function onMessage(msg:MessageHello)
+    function onMessage(msg:MessageHello, connection:Connection)
     {
         trace("Message: " + msg.txt);
     }

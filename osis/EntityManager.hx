@@ -466,7 +466,7 @@ class Net
 class EventContainer
 {
     public var message:IMessage;
-    public var func:Dynamic->Void;
+    public var func:IMessage->Connection->Void;
 
     public function new() {}
 }
@@ -706,7 +706,7 @@ class NetEntityManager extends Net
     {
         var eventContainer:EventContainer = eventListeners.get(messageTypeId);
         eventContainer.message.unserialize(connection.input);
-        eventContainer.func(cast eventContainer.message);
+        eventContainer.func(cast eventContainer.message, connection);
     }
 
     public function sendEvent(message:IMessage, ?connection:Connection)
@@ -730,11 +730,11 @@ class NetEntityManager extends Net
         message.serialize(output);
     }
 
-    public function registerEvent(messageClass:Class<IMessage>, func:Dynamic)
+    public function registerEvent<T:IMessage>(messageClass:Class<IMessage>, func:T->Connection->Void)
     {
         var event = new EventContainer();
         event.message = Type.createInstance(messageClass, []);
-        event.func = func;
+        event.func = cast func;
 
         eventListeners.set(event.message._sid, event);
     }
