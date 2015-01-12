@@ -4,12 +4,11 @@ import Common;
 
 class Server
 {
+    var em:EntityManager = new EntityManager();
     var net:NetEntityManager;
-    var em:EntityManager;
 
     public function new()
     {
-        em = new EntityManager();
         var ec = new EntityCreator(em);
         
         net = em.listen("127.0.0.1", 32000);
@@ -47,12 +46,6 @@ class Server
         net.sendEvent(msg);
 
         net.addComponent(datPlayer, new CTest());
-
-        // DEBUG
-        // if(datPlayer.id == 1)
-        // {
-        //     net.removeComponentOfType(datPlayer, CPosition);
-        // }
     }
 
     function onDisconnection(conn:Connection)

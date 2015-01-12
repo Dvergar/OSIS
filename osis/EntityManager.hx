@@ -642,30 +642,22 @@ class NetEntityManager extends Net
         for(entity in entities)
         {
             if(entity == connectionEntity) continue;
-            trace("sendentity " + entity);
             sendCreate(connection.output, entity);
             var templateCode = em.templatesById.get(entity.templateId).code;
             var deltaCode = entity.code ^ templateCode;
-            trace("entitycode " + entity.code);
-            trace("templateCode " + templateCode);
             for(pos in 0...32)
             {
                 var deltaBit = deltaCode & (1 << pos);
-                trace("deltacode " + deltaCode);
-                trace("gnn " + (1 << pos));
                 if(deltaBit != 0)  // CHANGE
                 {
-                    trace("CHANGE");
                     var addBit = entity.code & (1 << pos);
                     if(addBit != 0)  // ADD
                     {
-                        trace("ADD");
                         sendAddComponent(entity.id, cast entity.components[pos], connection);
                     }
                     else
                     {
                         sendRemoveComponent(entity.id, pos, connection);
-                        trace("REMOVE");
                     }
                 }
             }
