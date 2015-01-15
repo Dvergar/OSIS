@@ -20,8 +20,6 @@ class BuildEntities
             throw("You need to define your yaml path with
                   '-D yamlpath=your/yaml/path/'");
         var data:AnyObjectMap  = Yaml.read(yamlPath + "entities.yaml");
-        // var pos = Context.currentPos();
-        // var fields:Array<Field> = Context.getBuildFields();
 
         for(entityName in data.keys())
         {
@@ -33,12 +31,10 @@ class BuildEntities
             block.push(macro trace("Create entity: " + $v{entityName}));
             block.push(macro trace("func: " + this));
             block.push(macro var entity = self.createEntity());
-            // throw((macro var entity = createEntity()));
             block.push(macro trace("leld"));
 
             function buildEntity(component:AnyObjectMap, componentName:String)
             {
-                // var component:AnyObjectMap = entity.get(componentName);
                 var instanceName = componentName.toLowerCase();
 
                 // DECLARE NEW COMPONENTS

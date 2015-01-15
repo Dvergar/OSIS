@@ -43,7 +43,6 @@ class BuildComponents
             fields: [],
             isExtern: false,
             meta: [],
-            // kind: TDClass(TPath({name: "Component", pack: [], params: []}), [], false)
             kind: TDClass(null, [], false)
         });
 
@@ -101,8 +100,6 @@ class BuildComponents
 
             // BEFORE DEFINETYPE, PLEASE :|
             podstream.SerializerMacro._build(compFields, componentName);
-            // if(attachedComponentMacro != null)
-            //     attachedComponentMacro(compFields);
 
             Context.defineType({
                 pos: pos,
@@ -112,7 +109,6 @@ class BuildComponents
                 fields: compFields,
                 isExtern: false,
                 meta: [],
-                // kind: TDClass(null, [], false),
                 kind: TDClass({name: "EntityManager", sub: "Component", pack: ["osis"], params: []}, [], false)
             });
 

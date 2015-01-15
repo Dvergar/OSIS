@@ -666,7 +666,7 @@ class NetEntityManager extends Net
 
     public function markChanged<T:CompTP>(entity:Entity, component:T)
     {
-        // em.markChanged(entity, component);
+        em.markChanged(entity, component);
 
         for(connection in socket.connections)
         {
@@ -741,7 +741,7 @@ class NetEntityManager extends Net
         while(connection.input.mark - connection.input.position > 0)
         {
             var msgtype = connection.input.readInt8();
-            // trace("msgtype " + msgtype);
+
             switch(msgtype)
             {
                 case CREATE_ENTITY:
