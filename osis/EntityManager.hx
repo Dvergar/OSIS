@@ -115,25 +115,10 @@ class System
         // em.changes.push(new Change(entity, component._id));
     }
 
-    public function processEntity(entity:Entity)
-    {
-        // trace("processEntities");
-    }
-
-    public function onEntityChange(entity:Entity)
-    {
-        // trace("onEntityChange");
-    }
-
-    public function onEntityAdded(entity:Entity)
-    {
-        // trace("onEntityAdded");
-    }
-
-    public function onEntityRemoved(entity:Entity)
-    {
-        // trace("onEntityRemoved");
-    }
+    public function processEntity(entity:Entity) {}
+    public function onEntityChange(entity:Entity) {}
+    public function onEntityAdded(entity:Entity) {}
+    public function onEntityRemoved(entity:Entity) {}
 }
 
 
@@ -177,7 +162,7 @@ class Template
 class EntityManager
 {
     var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
-    var self:EntityManager;
+    // var self:EntityManager;  // YAML
     var templatesIds = 0;
     public var changes:Array<Change> = new Array();
     public var templatesByName:Map<String, Template> = new Map();
@@ -187,7 +172,7 @@ class EntityManager
     public function new()
     {
         this.net = new NetEntityManager(this);
-        this.self = this;
+        // this.self = this;  // YAML
     }
 
     public function registerTemplate(name:String, func:Void->Entity)
@@ -198,7 +183,6 @@ class EntityManager
         templatesById.set(template.id, template);
 
         // GET CODE
-        // template.code = 1;
         var entity = func();
         template.code = entity.code;
         destroyEntity(entity);
@@ -215,7 +199,6 @@ class EntityManager
         {
             if(component != null)
             {
-                trace("comp " + component);
                 removeComponent(entity, cast component);
             }
         }
@@ -241,9 +224,6 @@ class EntityManager
                 entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << system._id);
             }
         }
-
-        trace("addcomponent " + component);
-        trace("entitycodeadd " + entity.code);
 
         return component;
     }
@@ -275,9 +255,6 @@ class EntityManager
                 entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << system._id);
             }
         }
-
-        trace("remcomponent " + componentId);
-        trace("entitycoderem " + entity.code);
         
         entity.components[componentId] = null;
     }
@@ -311,15 +288,6 @@ class EntityManager
                     system.onEntityChange(change.entity);
                 }
             }
-
-            // for(system in systems)
-            // {
-            //     if( (system.code | (1 << change.componentType) ) == system.code )
-            //     {
-            //         if(system == change.notSystem) continue;
-            //         system.onEntityChange(change.entity);
-            //     }
-            // }
         }
 
         changes = new Array();
@@ -334,16 +302,6 @@ class EntityManager
         }
 
     }
-
-    // function processSystem<T:{__id:Int}>(systemClass:T)
-    // {
-    //     var system = systems.get(systemClass.__id);
-    //     for(entity in system.entities)
-    //     {
-    //         system.processEntity(entity);
-    //         if(changedEntities.has(entity)) system.onEntityChange(entity);
-    //     }
-    // }
 
     // FIXED UPDATE
     var loops:Int = 0;
@@ -486,7 +444,6 @@ class NetEntityManager extends Net
     static inline var REMOVE_COMPONENT = 4;
     static inline var DESTROY_ENTITY = 5;
     static inline var EVENT = 6;
-    static inline var EVENT2 = 7;
 
     public function new(em:EntityManager)
     {
@@ -553,7 +510,7 @@ class NetEntityManager extends Net
         // var templateId = entityFactory.indexOf(name);
         // trace("wat " + name);
         // if(templateId == -1) throw "The entity '${name}' doesn't exists";
-        trace("ezoirj " + em.templatesByName);
+
         var template = em.templatesByName.get(name);
         var entity:Entity = template.func();
         entity.templateId = template.id;
@@ -684,7 +641,7 @@ class NetEntityManager extends Net
             var msgtype = connection.input.readInt8();
             switch(msgtype)
             {
-                case EVENT2:
+                case EVENT:
                     var messageTypeId = connection.input.readInt8();
                     receiveEvent(messageTypeId, connection);
             }
@@ -717,7 +674,7 @@ class NetEntityManager extends Net
 
     inline function _sendEvent(output:haxe.io.BytesOutput, message:IMessage)
     {
-        output.writeInt8(EVENT2);
+        output.writeInt8(EVENT);
         output.writeInt8(message._sid);
         message.serialize(output);
     }
@@ -786,8 +743,8 @@ class NetEntityManager extends Net
                     component.unserialize(connection.input);
                     em.markChanged(entity, cast component);
 
-                case EVENT2:
-                    trace("EVENT2");
+                case EVENT:
+                    trace("EVENT");
                     var messageTypeId = connection.input.readInt8();
                     receiveEvent(messageTypeId, connection);
 
