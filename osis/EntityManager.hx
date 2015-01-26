@@ -100,6 +100,7 @@ class System
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
     public var net:NetEntityManager;
+    public var changes:ListSet<Entity>;
 
     public function need(componentTypeList:Array<Dynamic>)
     {
@@ -111,8 +112,9 @@ class System
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-        em.changes.push(new Change(entity, component._id, this));
+        // em.changes.push(new Change(entity, component._id, this));
         // em.changes.push(new Change(entity, component._id));
+        em.markChanged(entity, component, this)
     }
 
     public function processEntity(entity:Entity) {}
@@ -276,15 +278,20 @@ class EntityManager
     public function processAllSystems()
     {
         // CHANGE EVENT
-        for(change in changes)
+        // for(change in changes.iterator())
+        for(j in 0...changes.length)
         {
+            var change = changes[j];
             // TODO: iterate over entity.registeredSystemsCode instead
             for(i in 0...32)
             {
-                var system = systems.get(i);
                 if( (change.entity.registeredSystemsCode & 1 << i) != 0)
                 {
-                    if(system == change.notSystem) continue;
+                    var system = systems.get(i);
+                    if(system == change.notSystem)
+                    {
+                        continue;
+                    }
                     system.onEntityChange(change.entity);
                 }
             }
@@ -300,7 +307,6 @@ class EntityManager
                 system.processEntity(entity);
             }
         }
-
     }
 
     // FIXED UPDATE
@@ -338,7 +344,7 @@ class EntityManager
     //     return Reflect.field(this, type)();
     // }
 
-    @:allow(osis.NetEntityManager)
+    // @:allow(osis.NetEntityManager)
     function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
     // public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
@@ -744,7 +750,7 @@ class NetEntityManager extends Net
                     em.markChanged(entity, cast component);
 
                 case EVENT:
-                    trace("EVENT");
+                    // trace("EVENT");
                     var messageTypeId = connection.input.readInt8();
                     receiveEvent(messageTypeId, connection);
 
