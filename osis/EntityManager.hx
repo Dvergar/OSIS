@@ -100,44 +100,23 @@ class System
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
     public var net:NetEntityManager;
-    public var changes:ListSet<Entity>;
+    public var changes:ListSet<Entity> = new ListSet();
 
     public function need(componentTypeList:Array<Dynamic>)
     {
         for(componentType in componentTypeList)
-        {
             code = code | (1 << componentType.__id);
-        }
     }
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-        // em.changes.push(new Change(entity, component._id, this));
-        // em.changes.push(new Change(entity, component._id));
-        em.markChanged(entity, component, this)
+        em.markChanged(entity, component);
     }
 
     public function processEntity(entity:Entity) {}
     public function onEntityChange(entity:Entity) {}
     public function onEntityAdded(entity:Entity) {}
     public function onEntityRemoved(entity:Entity) {}
-}
-
-
-// TODO: Pool
-class Change
-{
-    public var entity:Entity;
-    public var componentType:Int;
-    public var notSystem:System;
-
-    public function new(entity:Entity, componentType:Int, notSystem:System)
-    // public function new(entity:Entity, componentType:Int)
-    {
-        this.entity = entity;
-        this.componentType = componentType;
-        this.notSystem = notSystem;
-    }
 }
 
 
@@ -166,7 +145,6 @@ class EntityManager
     var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
     // var self:EntityManager;  // YAML
     var templatesIds = 0;
-    public var changes:Array<Change> = new Array();
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Map<Int, Template> = new Map();
     public var net:NetEntityManager;
@@ -198,12 +176,8 @@ class EntityManager
     public function destroyEntity(entity:Entity)
     {
         for(component in entity.components)
-        {
             if(component != null)
-            {
                 removeComponent(entity, cast component);
-            }
-        }
     }
 
     public function addComponent<T>(entity:Entity, component:T):T
@@ -277,35 +251,16 @@ class EntityManager
 
     public function processAllSystems()
     {
-        // CHANGE EVENT
-        // for(change in changes.iterator())
-        for(j in 0...changes.length)
-        {
-            var change = changes[j];
-            // TODO: iterate over entity.registeredSystemsCode instead
-            for(i in 0...32)
-            {
-                if( (change.entity.registeredSystemsCode & 1 << i) != 0)
-                {
-                    var system = systems.get(i);
-                    if(system == change.notSystem)
-                    {
-                        continue;
-                    }
-                    system.onEntityChange(change.entity);
-                }
-            }
-        }
-
-        changes = new Array();
-
         // PROCESS LOOP
         for(system in systems)
         {
+            for(entity in system.changes)
+                system.onEntityChange(entity);
+
+            system.changes.clear();
+
             for(entity in system.entities)
-            {
                 system.processEntity(entity);
-            }
         }
     }
 
@@ -344,12 +299,17 @@ class EntityManager
     //     return Reflect.field(this, type)();
     // }
 
-    // @:allow(osis.NetEntityManager)
-    function markChanged<T:{var _id:Int;}>(entity:Entity, component:T, ?notSystem:System)
-    // public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
+    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-        changes.push(new Change(entity, component._id, notSystem));
-        // changes.push(new Change(entity, component._id));
+        for(i in 0...32)
+        {
+            if( (entity.registeredSystemsCode & 1 << i) != 0)
+            {
+                var system = systems.get(i);
+                if( (system.code & (1 << component._id)) != 0 )
+                    system.changes.set(entity);
+            }
+        }
     }
 
     // NET HELPERS
