@@ -585,10 +585,16 @@ class NetEntityManager extends Net
                     var addBit = entity.code & (1 << pos);
                     if(addBit != 0)  // ADD
                     {
+                        // Reflect until i find something cleaner (with podstream)
+                        if(Reflect.field(entity.components[pos], "_sid") == null)
+                            continue;
                         sendAddComponent(entity.id, cast entity.components[pos], connection);
                     }
                     else
                     {
+                        // Reflect until i find something cleaner (with podstream)
+                        if(Reflect.field(entity.components[pos], "_sid") == null)
+                            continue;
                         sendRemoveComponent(entity.id, pos, connection);
                     }
                 }
