@@ -228,6 +228,7 @@ class EntityManager
 
                 system.onEntityRemoved(entity);
                 system.entities.remove(entity);
+                system.changes.remove(entity);
                 entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << system._id);
             }
         }
@@ -255,7 +256,10 @@ class EntityManager
         for(system in systems)
         {
             for(entity in system.changes)
+            {
+                // if(entity == null) continue;
                 system.onEntityChange(entity);
+            }
 
             system.changes.clear();
 
@@ -524,12 +528,17 @@ class NetEntityManager extends Net
         entities.remove(entity.id);
     }
 
-    inline function sendAddComponent<T:CompTP>(entityId:Int, component:T, connection:Connection)
+    inline function sendAddComponent<T:CompTP>(entityId:Int, component:T, conn:Connection)
     {
-        connection.output.writeInt8(ADD_COMPONENT);
-        connection.output.writeInt16(entityId);
-        connection.output.writeInt8(component._sid);
-        component.serialize(connection.output);
+        // Error: because not all components are serializable
+        // See "sendworldstateto"
+        trace("entityid " + entityId);
+        trace("compo " + component);
+        trace("conn " + conn);
+        conn.output.writeInt8(ADD_COMPONENT);
+        conn.output.writeInt16(entityId);
+        conn.output.writeInt8(component._sid);
+        component.serialize(conn.output);
     }
 
     public function addComponent<T:CompTP>(entity:Entity, component:T):T
