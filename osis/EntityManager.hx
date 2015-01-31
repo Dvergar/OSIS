@@ -105,7 +105,11 @@ class System
     public function need(componentTypeList:Array<Dynamic>)
     {
         for(componentType in componentTypeList)
+        {
+            trace("systemcode " + code);
+            trace("adding component " + componentType.__id);
             code = code | (1 << componentType.__id);
+        }
     }
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
@@ -305,6 +309,7 @@ class EntityManager
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
+
         for(i in 0...32)
         {
             if( (entity.registeredSystemsCode & 1 << i) != 0)
@@ -530,11 +535,6 @@ class NetEntityManager extends Net
 
     inline function sendAddComponent<T:CompTP>(entityId:Int, component:T, conn:Connection)
     {
-        // Error: because not all components are serializable
-        // See "sendworldstateto"
-        trace("entityid " + entityId);
-        trace("compo " + component);
-        trace("conn " + conn);
         conn.output.writeInt8(ADD_COMPONENT);
         conn.output.writeInt16(entityId);
         conn.output.writeInt8(component._sid);
@@ -715,12 +715,13 @@ class NetEntityManager extends Net
                     em.removeComponent(entity, component);
 
                 case UPDATE_COMPONENT:
-                    // trace("UPDATE_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
                     var componentType = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
+                    // trace("UPDATE_COMPONENT");
+                    // trace(component._id);
                     component.unserialize(connection.input);
                     em.markChanged(entity, cast component);
 
