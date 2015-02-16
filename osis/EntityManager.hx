@@ -506,20 +506,6 @@ class NetEntityManager extends Net
         output.writeInt8(entity.templateId);
     }
 
-    // MIGHT BE USEFUL AT SOME POINT
-    // public function createEntity()
-    // {
-    //     var entity = em.createEntity();
-
-    //     for(connection in socket.connections)
-    //     {
-    //         connection.output.writeInt8(CREATE_ENTITY);
-    //         connection.output.writeInt16(entity.id);
-    //     }
-    //     entities.set(entity.id, entity);
-    //     return entity;
-    // }
-
     public function destroyEntity(entity:Entity)
     {
         for(connection in socket.connections)
@@ -631,7 +617,6 @@ class NetEntityManager extends Net
     #end
 
     /// COMMON ///
-
     function receiveEvent(messageTypeId:Int, connection:Connection)
     {
         var eventContainer:EventContainer = eventListeners.get(messageTypeId);
