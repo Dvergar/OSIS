@@ -186,6 +186,8 @@ class EntityManager
 
     public function addComponent<T>(entity:Entity, component:T):T
     {
+        // This is horrible, please find a way to type this correctly
+        if((untyped component)._id == null) throw "Trying to add a non-component";
         entity.components[(untyped component)._id] = cast component;
         entity.code = entity.code | (1 << (untyped component)._id);
 
