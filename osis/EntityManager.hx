@@ -100,6 +100,7 @@ class System
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
     public var net:NetEntityManager;
+    public var adds:ListSet<Entity> = new ListSet();
     public var changes:ListSet<Entity> = new ListSet();
 
     public function need(componentTypeList:Array<Dynamic>)
@@ -202,7 +203,7 @@ class EntityManager
                 }
 
                 system.entities.push(entity);
-                system.onEntityAdded(entity);
+                system.adds.set(entity);
                 entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << system._id);
             }
         }
@@ -261,9 +262,15 @@ class EntityManager
         // PROCESS LOOP
         for(system in systems)
         {
+            for(entity in system.adds)
+            {
+                system.onEntityAdded(entity);
+            }
+
+            system.adds.clear();
+
             for(entity in system.changes)
             {
-                // if(entity == null) continue;
                 system.onEntityChange(entity);
             }
 
