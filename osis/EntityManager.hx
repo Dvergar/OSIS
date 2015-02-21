@@ -2,6 +2,7 @@ package osis;
 
 import haxe.macro.Expr;
 import haxe.macro.Context;
+
 import anette.*;
 import anette.Protocol;
 import anette.Bytes;
@@ -43,7 +44,8 @@ typedef CompTP = {public var _sid:Int;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
 
-@:autoBuild(podstream.SerializerMacro.build())
+// @:autoBuild(podstream.SerializerMacro.build())
+@:autoBuild(osis.CustomNetworkTypes.build())
 interface Component {}
 
 
@@ -153,6 +155,7 @@ class EntityManager
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Map<Int, Template> = new Map();
     public var net:NetEntityManager;
+    public static var test:Int = 42;
 
     public function new()
     {
@@ -189,6 +192,7 @@ class EntityManager
     {
         // This is horrible, please find a way to type this correctly
         if((untyped component)._id == null) throw "Trying to add a non-component";
+        trace("addComponent " + (untyped component)._id);
         entity.components[(untyped component)._id] = cast component;
         entity.code = entity.code | (1 << (untyped component)._id);
 
@@ -202,7 +206,7 @@ class EntityManager
                     continue;
                 }
 
-                system.entities.push(entity);
+                system.entities.push(entity);  // Doublons can happen with network
                 system.adds.set(entity);
                 entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << system._id);
             }
@@ -415,6 +419,7 @@ class EventContainer
 
 class NetEntityManager extends Net
 {
+    public static var instance:NetEntityManager; // MEH
     var em:EntityManager;
     public var entities:Map<Int, Entity> = new Map();
     var serializableTypes:Array<Class<Component>> = new Array();
@@ -431,6 +436,7 @@ class NetEntityManager extends Net
 
     public function new(em:EntityManager)
     {
+        instance = this;
         this.em = em;
 
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
@@ -487,7 +493,7 @@ class NetEntityManager extends Net
     //     return entity;
     // }
 
-    public function create(name:String)
+    public function createEntity(name:String):Entity
     {
         // YAML
         // var templateId = templatesByString.get(name);
@@ -495,15 +501,31 @@ class NetEntityManager extends Net
         // trace("wat " + name);
         // if(templateId == -1) throw "The entity '${name}' doesn't exists";
 
+        // BUILD IT
         var template = em.templatesByName.get(name);
         var entity:Entity = template.func();
+
+        // SEND IT
+        return sendEntity(name, entity);
+    }
+
+    public function sendEntity(name:String, entity:Entity):Entity
+    {
+        trace("sendEntity " + name);
+        var template = em.templatesByName.get(name);
+        if(template == null) throw 'Template $name doesn\'t exists';
         entity.templateId = template.id;
 
         // SEND
         for(connection in socket.connections)
+        {   
             sendCreate(connection.output, entity);
+            sendDeltas(connection, entity);
+        }
 
         entities.set(entity.id, entity);
+
+        trace("endsendentity");
 
         return entity;
     }
@@ -570,29 +592,45 @@ class NetEntityManager extends Net
         {
             if(entity == connectionEntity) continue;
             sendCreate(connection.output, entity);
-            var templateCode = em.templatesById.get(entity.templateId).code;
-            var deltaCode = entity.code ^ templateCode;
-            for(pos in 0...32)
+            sendDeltas(connection, entity);
+        }
+    }
+
+    inline function sendDeltas(connection:Connection, entity:Entity)
+    {
+        var templateCode = em.templatesById.get(entity.templateId).code;
+        var deltaCode = entity.code ^ templateCode;
+        for(pos in 0...32)
+        {
+            // CHECK IF COMPONENT REMOVED FROM TEMPLATE
+            var deltaBit = deltaCode & (1 << pos);
+            if(deltaBit != 0)  // CHANGE
             {
-                var deltaBit = deltaCode & (1 << pos);
-                if(deltaBit != 0)  // CHANGE
+                var addBit = entity.code & (1 << pos);
+                if(addBit != 0)  // ADD
                 {
-                    var addBit = entity.code & (1 << pos);
-                    if(addBit != 0)  // ADD
-                    {
-                        // Reflect until i find something cleaner (with podstream)
-                        if(Reflect.field(entity.components[pos], "_sid") == null)
-                            continue;
-                        sendAddComponent(entity.id, cast entity.components[pos], connection);
-                    }
-                    else
-                    {
-                        // Reflect until i find something cleaner (with podstream)
-                        if(Reflect.field(entity.components[pos], "_sid") == null)
-                            continue;
-                        sendRemoveComponent(entity.id, pos, connection);
-                    }
+                    // // Reflect until i find something cleaner (with podstream)
+                    // if(Reflect.field(entity.components[pos], "_sid") == null)
+                    //     continue;
+                    // sendAddComponent(entity.id, cast entity.components[pos], connection);
                 }
+                else
+                {
+                    // Reflect until i find something cleaner (with podstream)
+                    if(Reflect.field(entity.components[pos], "_sid") == null)
+                        continue;
+                    sendRemoveComponent(entity.id, pos, connection);
+                }
+            }
+
+            // SEND ENTITY COMPONENT VALUES
+            if( (entity.code & 1 << pos) != 0)
+            {
+                // Reflect until i find something cleaner (with podstream)
+                if(Reflect.field(entity.components[pos], "_sid") == null)
+                    continue;
+
+                sendAddComponent(entity.id, cast entity.components[pos], connection);
             }
         }
     }
@@ -690,10 +728,10 @@ class NetEntityManager extends Net
                     em.destroyEntity(entity);
 
                 case ADD_COMPONENT:
-                    trace("ADD_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var entity = entities.get(entityId);
                     var componentTypeId = connection.input.readInt8();
+                    // trace("ADD_COMPONENT " + componentTypeId);
                     var componentType = cast serializableTypes[componentTypeId];
                     var component:CompTP = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
