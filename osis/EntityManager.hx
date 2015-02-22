@@ -85,16 +85,16 @@ class EntitySet
     public var _id:Int;
     static var ids:Int = 0;
     public var code:Int = 0;
-    public var entities:Array<Entity> = new Array();
+    public var entities:ListSet<Entity> = new ListSet();
     public var em:EntityManager;
+
+    public var _adds:ListSet<Entity> = new ListSet();
+    public var _changes:ListSet<Entity> = new ListSet();
+    public var _removes:ListSet<Entity> = new ListSet();
 
     public var adds:ListSet<Entity> = new ListSet();
     public var changes:ListSet<Entity> = new ListSet();
     public var removes:ListSet<Entity> = new ListSet();
-
-    public var readableAdds:ListSet<Entity> = new ListSet();
-    public var readableChanges:ListSet<Entity> = new ListSet();
-    public var readableRemoves:ListSet<Entity> = new ListSet();
 
     public function new(em:EntityManager, componentTypeList:Array<Dynamic>)
     {
@@ -111,31 +111,18 @@ class EntitySet
 
     public function applyChanges()
     {
-        readableAdds = adds;
-        readableChanges = changes;
-        readableRemoves = removes;
+        adds = _adds;
+        changes = _changes;
+        removes = _removes;
 
-        adds = new ListSet();
-        changes = new ListSet();
-        removes = new ListSet();
+        _adds = new ListSet();
+        _changes = new ListSet();
+        _removes = new ListSet();
     }
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
         em.markChanged(entity, component);
-    }
-
-    public function entitiesChanged()
-    {
-        return readableChanges;
-    }
-    public function entitiesAdded()
-    {
-        return readableAdds;
-    }
-    public function entitiesRemoved()
-    {
-        return readableRemoves;
     }
 }
 
@@ -167,9 +154,8 @@ class EntityManager
     var systems:Array<System> = new Array();
     var entitySets:haxe.ds.IntMap<EntitySet> = new haxe.ds.IntMap(); // Why not array?
     var componentsToDestroy:Array<ComponentDestroy> = new Array();
-    var templatesIds = 0;
     public var templatesByName:Map<String, Template> = new Map();
-    public var templatesById:Map<Int, Template> = new Map();
+    public var templatesById:Array<Template> = new Array();
     public var net:NetEntityManager;
     public static var test:Int = 42;
     // var self:EntityManager;  // YAML
@@ -183,7 +169,6 @@ class EntityManager
     public function getEntitySet(componentTypeList:Array<Dynamic>)
     {
         var entitySet = new EntitySet(this, componentTypeList);
-        // trace("entityset " + entitySet);
         entitySets.set(entitySet._id, entitySet);
         return entitySet;
     }
@@ -193,9 +178,9 @@ class EntityManager
         var template = new Template(name);
         template.func = func;
         templatesByName.set(name, template);
-        templatesById.set(template.id, template);
+        templatesById[template.id] = template;
 
-        // GET CODE
+        // GET TEMPLATE CODE (used for network deltas)
         var entity = func();
         template.code = entity.code;
         destroyEntity(entity);
@@ -217,7 +202,6 @@ class EntityManager
     {
         // This is horrible, please find a way to type this correctly
         if((untyped component)._id == null) throw "Trying to add a non-component";
-        trace("addComponent " + (untyped component)._id);
         entity.components[(untyped component)._id] = cast component;
         entity.code = entity.code | (1 << (untyped component)._id);
 
@@ -225,14 +209,15 @@ class EntityManager
         {
             if( (entitySet.code & entity.code) == entitySet.code )
             {
+                // IF addComponent is called from that very entitySet...
                 var idCode = 0 | (1 << entitySet._id);
                 if( (entity.registeredSetsCode & idCode) == idCode)
                 {
                     continue;
                 }
 
-                entitySet.entities.push(entity);  // Doublons can happen with network
-                entitySet.adds.set(entity);
+                entitySet.entities.set(entity);
+                entitySet._adds.set(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
         }
@@ -263,9 +248,9 @@ class EntityManager
                 if( (entity.registeredSetsCode & idCode) != idCode)
                     continue;
 
-                entitySet.removes.set(entity);
+                entitySet._removes.set(entity);
                 entitySet.entities.remove(entity);
-                entitySet.changes.remove(entity);
+                entitySet._changes.remove(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode & ~(1 << entitySet._id);
             }
         }
@@ -339,7 +324,7 @@ class EntityManager
             {
                 var entitySet = entitySets.get(i);
                 if( (entitySet.code & (1 << component._id)) != 0 )
-                    entitySet.changes.set(entity);
+                    entitySet._changes.set(entity);
             }
         }
     }
@@ -610,7 +595,7 @@ class NetEntityManager extends Net
 
     inline function sendDeltas(connection:Connection, entity:Entity)
     {
-        var templateCode = em.templatesById.get(entity.templateId).code;
+        var templateCode = em.templatesById[entity.templateId].code;
         var deltaCode = entity.code ^ templateCode;
         for(pos in 0...32)
         {
@@ -779,7 +764,7 @@ class NetEntityManager extends Net
                     var templateId = connection.input.readInt8();
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
-                    var entity = em.templatesById.get(templateId).func();
+                    var entity = em.templatesById[templateId].func();
                     entities.set(entityId, entity);
             }
         }
