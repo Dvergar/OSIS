@@ -11,33 +11,6 @@ import de.polygonal.ds.ListSet;
 
 typedef Connection = anette.Connection;
 
-
-// class IdAssign
-// {
-//     #if macro
-//     static var ids:Int = 1;
-//     static public function _build(fields:Array<Field>):Array<Field>
-//     {
-//         var id = ids++;
-//         trace("id " + id);
-
-//         var def = macro class {public var _id:Int = $v{id};
-//                                public static var __id:Int = $v{id}};
-
-//         return fields.concat(def.fields);
-//         return fields;
-//     }
-//     #end
-
-//     macro static public function build():Array<Field>
-//     {
-//         var fields = Context.getBuildFields();
-//         fields = _build(fields);  // remove fields = _...
-//         return fields;
-//     }
-// }
-
-
 typedef CompTP = {public var _sid:Int;
                   public var _id:Int;
                   public function unserialize(bi:haxe.io.BytesInput):Void;
@@ -125,9 +98,10 @@ class EntitySet
     public var readableChanges:ListSet<Entity> = new ListSet();
     public var readableRemoves:ListSet<Entity> = new ListSet();
 
-    public function new(componentTypeList:Array<Dynamic>)
+    public function new(em:EntityManager, componentTypeList:Array<Dynamic>)
     {
         this._id = ids++;
+        this.em = em;
 
         for(componentType in componentTypeList)
         {
@@ -192,16 +166,15 @@ typedef ComponentDestroy = {entity:Entity, componentId:Int};
 #end
 class EntityManager
 {
-    // var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
     var systems:Array<System> = new Array();
     var entitySets:haxe.ds.IntMap<EntitySet> = new haxe.ds.IntMap(); // Why not array?
     var componentsToDestroy:Array<ComponentDestroy> = new Array();
-    // var self:EntityManager;  // YAML
     var templatesIds = 0;
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Map<Int, Template> = new Map();
     public var net:NetEntityManager;
     public static var test:Int = 42;
+    // var self:EntityManager;  // YAML
 
     public function new()
     {
@@ -211,8 +184,8 @@ class EntityManager
 
     public function getEntitySet(componentTypeList:Array<Dynamic>)
     {
-        var entitySet = new EntitySet(componentTypeList);
-        trace("entityset " + entitySet);
+        var entitySet = new EntitySet(this, componentTypeList);
+        // trace("entityset " + entitySet);
         entitySets.set(entitySet._id, entitySet);
         return entitySet;
     }
@@ -239,7 +212,7 @@ class EntityManager
     {
         for(component in entity.components)
             if(component != null)
-                removeComponent(entity, cast component);
+                removeComponentInstance(entity, cast component);
     }
 
     public function addComponent<T>(entity:Entity, component:T):T
@@ -269,17 +242,18 @@ class EntityManager
         return component;
     }
 
-    public function removeComponent<T:{_id:Int}>(entity:Entity, component:T)
+    @:allow(osis.NetEntityManager)
+    function removeComponentInstance<T:{_id:Int}>(entity:Entity, component:T)
     {
-        removeComp(entity, component._id);
+        _removeComponent(entity, component._id);
     }
 
-    public function removeComponentOfType<T:{__id:Int}>(entity:Entity, componentType:T)
+    public function removeComponent<T:{__id:Int}>(entity:Entity, componentType:T)
     {
-        removeComp(entity, componentType.__id);
+        _removeComponent(entity, componentType.__id);
     }
 
-    inline function removeComp(entity:Entity, componentId:Int)
+    inline function _removeComponent(entity:Entity, componentId:Int)
     {
         entity.code = entity.code & ~(1 << componentId);
 
@@ -612,11 +586,11 @@ class NetEntityManager extends Net
         connection.output.writeInt8(componentId);
     }
 
-    public function removeComponentOfType<T:{__sid:Int}>(entity:Entity, componentType:T)
+    public function removeComponent<T:{__sid:Int}>(entity:Entity, componentType:T)
     {
         for(connection in socket.connections)
             sendRemoveComponent(entity.id, componentType.__sid, connection);
-        em.removeComponentOfType(entity, cast componentType);
+        em.removeComponent(entity, cast componentType);
     }
 
     public function sendWorldStateTo(connection:Connection)
@@ -782,7 +756,7 @@ class NetEntityManager extends Net
                     var componentType = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
-                    em.removeComponent(entity, component);
+                    em.removeComponentInstance(entity, component);
 
                 case UPDATE_COMPONENT:
                     var entityId = connection.input.readInt16();

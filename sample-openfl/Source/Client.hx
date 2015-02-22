@@ -34,34 +34,6 @@ class DrawableSystem extends System
         entitySet = em.getEntitySet([CDrawable, CPosition]);
     }
 
-    // public override function onEntityAdded(entity:Entity)
-    // {
-    //     trace("onEntityAdded");
-    //     var drawable = entity.get(CDrawable);
-    //     var sprite = getSprite(drawable.imageName);
-    //     Lib.current.addChild(sprite);
-    //     sprites.set(entity.id, sprite);
-    // }
-
-    // public override function onEntityRemoved(entity:Entity)
-    // {
-    //     var drawable = entity.get(CDrawable);
-
-    //     var sprite = sprites.get(entity.id);
-    //     Lib.current.removeChild(sprite);
-    //     sprites.remove(entity.id);
-    // }
-
-    // public override function onEntityChange(entity:Entity)
-    // {
-    //     // trace("entity change");
-    //     var pos = entity.get(CPosition);
-    //     var sprite = sprites.get(entity.id);
-
-    //     sprite.x = pos.x;
-    //     sprite.y = pos.y;
-    // }
-
     public override function loop()
     {
         entitySet.applyChanges();
@@ -124,35 +96,6 @@ class DebugSystem extends System
     {
         entitySet = em.getEntitySet([CTest, CPosition]);
     }
-
-    // public override function onEntityAdded(entity:Entity)
-    // {
-    //     trace("ondebug added");
-    //     var pos = entity.get(CPosition);
-    //     var label = new flash.text.TextField();
-    //     label.textColor = 0xFF0000;
-    //     label.x = pos.x;
-    //     label.y = pos.y + 80;
-    //     label.text = "boom boom";
-    //     Lib.current.addChild(label);
-    //     labels.set(entity.id, label);
-    // }
-
-    // public override function onEntityRemoved(entity:Entity)
-    // {
-    //     var label = labels.get(entity.id);
-    //     Lib.current.removeChild(label);
-    //     labels.remove(entity.id);
-    // }
-
-    // public override function onEntityChange(entity:Entity)
-    // {
-    //     var pos = entity.get(CPosition);
-    //     var label = labels.get(entity.id);
-
-    //     label.x = pos.x;
-    //     label.y = pos.y + 80;
-    // }
 
     public override function loop()
     {
