@@ -38,7 +38,7 @@ class DrawableSystem extends System
     {
         entitySet.applyChanges();
 
-        for(entity in entitySet.entitiesAdded())
+        for(entity in entitySet.adds)
         {
             trace("onEntityAdded");
             var drawable = entity.get(CDrawable);
@@ -47,7 +47,7 @@ class DrawableSystem extends System
             sprites.set(entity.id, sprite);
         }
 
-        for(entity in entitySet.entitiesChanged())
+        for(entity in entitySet.changes)
         {
             var pos = entity.get(CPosition);
             var sprite = sprites.get(entity.id);
@@ -56,7 +56,7 @@ class DrawableSystem extends System
             sprite.y = pos.y;
         }
 
-        for(entity in entitySet.entitiesRemoved())
+        for(entity in entitySet.removes)
         {
             var drawable = entity.get(CDrawable);
 
@@ -101,7 +101,7 @@ class DebugSystem extends System
     {
         entitySet.applyChanges();
 
-        for(entity in entitySet.entitiesAdded())
+        for(entity in entitySet.adds)
         {
             trace("ondebug added");
             var pos = entity.get(CPosition);
@@ -114,7 +114,7 @@ class DebugSystem extends System
             labels.set(entity.id, label);
         }
 
-        for(entity in entitySet.entitiesChanged())
+        for(entity in entitySet.changes)
         {
             var pos = entity.get(CPosition);
             var label = labels.get(entity.id);
@@ -123,7 +123,7 @@ class DebugSystem extends System
             label.y = pos.y + 80;
         }
 
-        for(entity in entitySet.entitiesRemoved())
+        for(entity in entitySet.removes)
         {
             var label = labels.get(entity.id);
             Lib.current.removeChild(label);

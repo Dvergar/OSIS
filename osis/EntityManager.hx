@@ -85,8 +85,8 @@ class EntitySet
     public var _id:Int;
     static var ids:Int = 0;
     public var code:Int = 0;
-    public var entities:ListSet<Entity> = new ListSet();
     public var em:EntityManager;
+    public var entities:ListSet<Entity> = new ListSet();
 
     public var _adds:ListSet<Entity> = new ListSet();
     public var _changes:ListSet<Entity> = new ListSet();
