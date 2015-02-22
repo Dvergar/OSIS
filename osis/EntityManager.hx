@@ -11,14 +11,15 @@ import de.polygonal.ds.ListSet;
 
 typedef Connection = anette.Connection;
 
-typedef CompTP = {public var _sid:Int;
-                  public var _id:Int;
-                  public function unserialize(bi:haxe.io.BytesInput):Void;
-                  public function serialize(bo:haxe.io.BytesOutput):Void;};
-
 
 @:autoBuild(osis.CustomNetworkTypes.build())
-interface Component {}
+interface Component
+{
+    public var _sid:Int;
+    public var _id:Int;
+    public function unserialize(bi:haxe.io.BytesInput):Void;
+    public function serialize(bo:haxe.io.BytesOutput):Void;
+}
 
 
 @:autoBuild(podstream.SerializerMacro.build())
@@ -48,7 +49,7 @@ class Entity
         trace("ENTITY ID " + id);
     }
 
-    public function get<T>(componentType:Class<T>):T
+    public function get<T:Component>(componentType:Class<T>):T
     {
         var comp:T = cast components[(untyped componentType).__id];
         if(comp == null)
@@ -56,7 +57,7 @@ class Entity
         return comp;
     }
 
-    public function has<T>(componentType:Class<T>):Bool
+    public function has<T:Component>(componentType:Class<T>):Bool
     {
         var comp:T = cast components[(untyped componentType).__id];
         if(comp == null) return false;
@@ -70,12 +71,8 @@ class System
     public var em:EntityManager;
     public var net:NetEntityManager;
 
-    public function new()
-    {
-    }
-
+    public function new() {}
     public function init() {}
-
     public function loop() {}
 }
 
@@ -96,7 +93,7 @@ class EntitySet
     public var changes:ListSet<Entity> = new ListSet();
     public var removes:ListSet<Entity> = new ListSet();
 
-    public function new(em:EntityManager, componentTypeList:Array<Dynamic>)
+    public function new(em:EntityManager, componentTypeList:Array<Class<Component>>)
     {
         this._id = ids++;
         this.em = em;
@@ -104,8 +101,9 @@ class EntitySet
         for(componentType in componentTypeList)
         {
             trace("systemcode " + code);
-            trace("adding component " + componentType.__id);
-            code = code | (1 << componentType.__id);
+            trace((untyped componentType).__id);
+            trace("Adding component ID" + (untyped componentType).__id);
+            code = code | (1 << (untyped componentType).__id);
         }
     }
 
@@ -120,7 +118,7 @@ class EntitySet
         _removes = new ListSet();
     }
 
-    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T)
     {
         em.markChanged(entity, component);
     }
@@ -157,7 +155,6 @@ class EntityManager
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Array<Template> = new Array();
     public var net:NetEntityManager;
-    public static var test:Int = 42;
     // var self:EntityManager;  // YAML
 
     public function new()
@@ -166,7 +163,7 @@ class EntityManager
         // this.self = this;  // YAML
     }
 
-    public function getEntitySet(componentTypeList:Array<Dynamic>)
+    public function getEntitySet(componentTypeList:Array<Class<Component>>)
     {
         var entitySet = new EntitySet(this, componentTypeList);
         entitySets.set(entitySet._id, entitySet);
@@ -195,15 +192,13 @@ class EntityManager
     {
         for(component in entity.components)
             if(component != null)
-                removeComponentInstance(entity, cast component);
+                removeComponentInstance(entity, component);
     }
 
-    public function addComponent<T>(entity:Entity, component:T):T
+    public function addComponent<T:Component>(entity:Entity, component:T):T
     {
-        // This is horrible, please find a way to type this correctly
-        if((untyped component)._id == null) throw "Trying to add a non-component";
-        entity.components[(untyped component)._id] = cast component;
-        entity.code = entity.code | (1 << (untyped component)._id);
+        entity.components[component._id] = component;
+        entity.code = entity.code | (1 << component._id);
 
         for(entitySet in entitySets)
         {
@@ -226,14 +221,14 @@ class EntityManager
     }
 
     @:allow(osis.NetEntityManager)
-    function removeComponentInstance<T:{_id:Int}>(entity:Entity, component:T)
+    function removeComponentInstance<T:Component>(entity:Entity, component:T)
     {
         _removeComponent(entity, component._id);
     }
 
-    public function removeComponent<T:{__id:Int}>(entity:Entity, componentType:T)
+    public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
-        _removeComponent(entity, componentType.__id);
+        _removeComponent(entity, (untyped componentType).__id);
     }
 
     inline function _removeComponent(entity:Entity, componentId:Int)
@@ -258,7 +253,7 @@ class EntityManager
         componentsToDestroy.push({entity:entity, componentId:componentId});  // TEMPORARY, hopefully
     }
 
-    public function getComponent<T>(entity:Entity, componentType:Class<T>):T
+    public function getComponent<T:Component>(entity:Entity, componentType:Class<T>):T
     {
         return entity.get(componentType);
     }
@@ -316,7 +311,7 @@ class EntityManager
     //     return Reflect.field(this, type)();
     // }
 
-    public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T)
     {
         for(i in 0...32)
         {
@@ -416,8 +411,8 @@ class EventContainer
 
 class NetEntityManager extends Net
 {
-    public static var instance:NetEntityManager; // MEH
     var em:EntityManager;
+    public static var instance:NetEntityManager; // MEH
     public var entities:Map<Int, Entity> = new Map();
     var serializableTypes:Array<Class<Component>> = new Array();
     var entityFactory:Array<String>; // FED BY NEW (SERIALIZED BY MACRO)
@@ -442,8 +437,8 @@ class NetEntityManager extends Net
         for(serializable in serializables)
         {
             if(serializable == null) continue;
-            var c = Type.resolveClass(serializable);
-            serializableTypes[cast(c).__sid] = cast c;
+            var componentType:Class<Component> = cast Type.resolveClass(serializable);
+            serializableTypes[(untyped componentType).__sid] = componentType;
         }
 
         trace("componentTypes " + serializableTypes);
@@ -458,13 +453,13 @@ class NetEntityManager extends Net
     public var connections:Map<Entity, Connection> = new Map();  // TEMP
 
     // USED WHEN DISCONNECTED FOR ENTITY DESTROY
-    public function bindEntity(connection:anette.Connection, entity:Entity)
+    public function bindEntity(connection:Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
         connections.set(entity, connection);  // TEMP
     }
 
-    public function getBoundEntity(connection:anette.Connection)
+    public function getBoundEntity(connection:Connection)
     {
         return entitiesByConnection.get(connection);
     }
@@ -522,8 +517,6 @@ class NetEntityManager extends Net
 
         entities.set(entity.id, entity);
 
-        trace("endsendentity");
-
         return entity;
     }
 
@@ -547,7 +540,7 @@ class NetEntityManager extends Net
         entities.remove(entity.id);
     }
 
-    inline function sendAddComponent<T:CompTP>(entityId:Int, component:T, conn:Connection)
+    inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection)
     {
         conn.output.writeInt8(ADD_COMPONENT);
         conn.output.writeInt16(entityId);
@@ -555,13 +548,13 @@ class NetEntityManager extends Net
         component.serialize(conn.output);
     }
 
-    public function addComponent<T:CompTP>(entity:Entity, component:T):T
+    public function addComponent<T:Component>(entity:Entity, component:T):T
     {
         for(connection in socket.connections)
             sendAddComponent(entity.id, component, connection);
 
         em.addComponent(entity, component);
-        return cast component;
+        return component;
     }
 
     inline function sendRemoveComponent(entityId:Int, componentId:Int, connection:Connection)
@@ -571,16 +564,15 @@ class NetEntityManager extends Net
         connection.output.writeInt8(componentId);
     }
 
-    public function removeComponent<T:{__sid:Int}>(entity:Entity, componentType:T)
+    public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
         for(connection in socket.connections)
-            sendRemoveComponent(entity.id, componentType.__sid, connection);
-        em.removeComponent(entity, cast componentType);
+            sendRemoveComponent(entity.id, (untyped componentType).__sid, connection);
+        em.removeComponent(entity, componentType);
     }
 
     public function sendWorldStateTo(connection:Connection)
     {
-        trace("sendWorldStateTo");
         var connectionEntity = entitiesByConnection.get(connection);
         if(connectionEntity == null)
             throw "Connection has to have a bound entity";
@@ -613,9 +605,7 @@ class NetEntityManager extends Net
                 }
                 else
                 {
-                    // Reflect until i find something cleaner (with podstream)
-                    if(Reflect.field(entity.components[pos], "_sid") == null)
-                        continue;
+                    if(entity.components[pos]._sid == -1) continue;
                     sendRemoveComponent(entity.id, pos, connection);
                 }
             }
@@ -623,16 +613,13 @@ class NetEntityManager extends Net
             // SEND ENTITY COMPONENT VALUES
             if( (entity.code & 1 << pos) != 0)
             {
-                // Reflect until i find something cleaner (with podstream)
-                if(Reflect.field(entity.components[pos], "_sid") == null)
-                    continue;
-
-                sendAddComponent(entity.id, cast entity.components[pos], connection);
+                if(entity.components[pos]._sid == -1) continue;
+                sendAddComponent(entity.id, entity.components[pos], connection);
             }
         }
     }
 
-    public function markChanged<T:CompTP>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T)
     {
         em.markChanged(entity, component);
 
@@ -664,7 +651,7 @@ class NetEntityManager extends Net
     {
         var eventContainer:EventContainer = eventListeners.get(messageTypeId);
         eventContainer.message.unserialize(connection.input);
-        eventContainer.func(cast eventContainer.message, connection);
+        eventContainer.func(eventContainer.message, connection);
     }
 
     public function sendEvent(message:IMessage, ?connection:Connection)
@@ -688,7 +675,8 @@ class NetEntityManager extends Net
         message.serialize(output);
     }
 
-    public function registerEvent<T:IMessage>(messageClass:Class<IMessage>, func:T->Connection->Void)
+    public function registerEvent<T:IMessage>(messageClass:Class<IMessage>,
+                                              func:T->Connection->Void)
     {
         var event = new EventContainer();
         event.message = Type.createInstance(messageClass, []);
@@ -728,8 +716,8 @@ class NetEntityManager extends Net
                     var entity = entities.get(entityId);
                     var componentTypeId = connection.input.readInt8();
                     // trace("ADD_COMPONENT " + componentTypeId);
-                    var componentType = cast serializableTypes[componentTypeId];
-                    var component:CompTP = Type.createInstance(componentType, []);
+                    var componentType:Class<Component> = cast serializableTypes[componentTypeId];
+                    var component:Component = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
                     em.addComponent(entity, component);
 
@@ -737,7 +725,7 @@ class NetEntityManager extends Net
                     trace("REMOVE_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
-                    var componentType = cast serializableTypes[componentTypeId];
+                    var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
                     em.removeComponentInstance(entity, component);
@@ -745,13 +733,13 @@ class NetEntityManager extends Net
                 case UPDATE_COMPONENT:
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
-                    var componentType = cast serializableTypes[componentTypeId];
+                    var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
                     // trace("UPDATE_COMPONENT");
                     // trace(component._id);
                     component.unserialize(connection.input);
-                    em.markChanged(entity, cast component);
+                    em.markChanged(entity, component);
 
                 case EVENT:
                     // trace("EVENT");
@@ -770,7 +758,7 @@ class NetEntityManager extends Net
         }
     }
 
-    public function markChanged<T:CompTP>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T)
     {
         // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
         // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
