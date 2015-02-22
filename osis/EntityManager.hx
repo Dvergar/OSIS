@@ -665,11 +665,10 @@ class NetEntityManager extends Net
         while(connection.input.mark - connection.input.position > 0)
         {
             var msgtype = connection.input.readInt8();
-            switch(msgtype)
+            if(msgtype == EVENT)
             {
-                case EVENT:
-                    var messageTypeId = connection.input.readInt8();
-                    receiveEvent(messageTypeId, connection);
+                var messageTypeId = connection.input.readInt8();
+                receiveEvent(messageTypeId, connection);
             }
         }
     }
