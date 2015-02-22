@@ -17,7 +17,6 @@ typedef CompTP = {public var _sid:Int;
                   public function serialize(bo:haxe.io.BytesOutput):Void;};
 
 
-// @:autoBuild(podstream.SerializerMacro.build())
 @:autoBuild(osis.CustomNetworkTypes.build())
 interface Component {}
 
@@ -35,13 +34,12 @@ interface IMessage
 class Entity
 {
     static var ids:Int = 0;
-    
-    public var code:Int = 0;
     public var id:Int;
+    public var code:Int = 0;
     public var components:Array<Component> = new Array();
-    public var registeredSystemsCode:Int = 0;
+    public var registeredSetsCode:Int = 0;
 
-    // NET STUFF
+    // NET
     public var templateId:Int;
 
     public function new()
@@ -228,14 +226,14 @@ class EntityManager
             if( (entitySet.code & entity.code) == entitySet.code )
             {
                 var idCode = 0 | (1 << entitySet._id);
-                if( (entity.registeredSystemsCode & idCode) == idCode)
+                if( (entity.registeredSetsCode & idCode) == idCode)
                 {
                     continue;
                 }
 
                 entitySet.entities.push(entity);  // Doublons can happen with network
                 entitySet.adds.set(entity);
-                entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << entitySet._id);
+                entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
         }
 
@@ -262,13 +260,13 @@ class EntityManager
             if( (entitySet.code & entity.code) != entitySet.code)
             {
                 var idCode = 0 | (1 << entitySet._id);
-                if( (entity.registeredSystemsCode & idCode) != idCode)
+                if( (entity.registeredSetsCode & idCode) != idCode)
                     continue;
 
                 entitySet.removes.set(entity);
                 entitySet.entities.remove(entity);
                 entitySet.changes.remove(entity);
-                entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << entitySet._id);
+                entity.registeredSetsCode = entity.registeredSetsCode & ~(1 << entitySet._id);
             }
         }
         
@@ -337,7 +335,7 @@ class EntityManager
     {
         for(i in 0...32)
         {
-            if( (entity.registeredSystemsCode & 1 << i) != 0)
+            if( (entity.registeredSetsCode & 1 << i) != 0)
             {
                 var entitySet = entitySets.get(i);
                 if( (entitySet.code & (1 << component._id)) != 0 )
@@ -421,6 +419,7 @@ class Net
     }
 }
 
+
 class EventContainer
 {
     public var message:IMessage;
@@ -428,6 +427,7 @@ class EventContainer
 
     public function new() {}
 }
+
 
 class NetEntityManager extends Net
 {
