@@ -27,38 +27,71 @@ class CDrawable implements Component
 class DrawableSystem extends System
 {
     var sprites:Map<Int, Sprite> = new Map();
+    var entitySet:EntitySet;
 
-    public function new()
+    public override function init()
     {
-        need([CDrawable, CPosition]);
+        entitySet = em.getEntitySet([CDrawable, CPosition]);
     }
 
-    public override function onEntityAdded(entity:Entity)
+    // public override function onEntityAdded(entity:Entity)
+    // {
+    //     trace("onEntityAdded");
+    //     var drawable = entity.get(CDrawable);
+    //     var sprite = getSprite(drawable.imageName);
+    //     Lib.current.addChild(sprite);
+    //     sprites.set(entity.id, sprite);
+    // }
+
+    // public override function onEntityRemoved(entity:Entity)
+    // {
+    //     var drawable = entity.get(CDrawable);
+
+    //     var sprite = sprites.get(entity.id);
+    //     Lib.current.removeChild(sprite);
+    //     sprites.remove(entity.id);
+    // }
+
+    // public override function onEntityChange(entity:Entity)
+    // {
+    //     // trace("entity change");
+    //     var pos = entity.get(CPosition);
+    //     var sprite = sprites.get(entity.id);
+
+    //     sprite.x = pos.x;
+    //     sprite.y = pos.y;
+    // }
+
+    public override function loop()
     {
-        trace("onEntityAdded");
-        var drawable = entity.get(CDrawable);
-        var sprite = getSprite(drawable.imageName);
-        Lib.current.addChild(sprite);
-        sprites.set(entity.id, sprite);
-    }
+        entitySet.applyChanges();
 
-    public override function onEntityRemoved(entity:Entity)
-    {
-        var drawable = entity.get(CDrawable);
+        for(entity in entitySet.entitiesAdded())
+        {
+            trace("onEntityAdded");
+            var drawable = entity.get(CDrawable);
+            var sprite = getSprite(drawable.imageName);
+            Lib.current.addChild(sprite);
+            sprites.set(entity.id, sprite);
+        }
 
-        var sprite = sprites.get(entity.id);
-        Lib.current.removeChild(sprite);
-        sprites.remove(entity.id);
-    }
+        for(entity in entitySet.entitiesChanged())
+        {
+            var pos = entity.get(CPosition);
+            var sprite = sprites.get(entity.id);
 
-    public override function onEntityChange(entity:Entity)
-    {
-        // trace("entity change");
-        var pos = entity.get(CPosition);
-        var sprite = sprites.get(entity.id);
+            sprite.x = pos.x;
+            sprite.y = pos.y;
+        }
 
-        sprite.x = pos.x;
-        sprite.y = pos.y;
+        for(entity in entitySet.entitiesRemoved())
+        {
+            var drawable = entity.get(CDrawable);
+
+            var sprite = sprites.get(entity.id);
+            Lib.current.removeChild(sprite);
+            sprites.remove(entity.id);
+        }
     }
 
     public inline static function getBitmap(imageName:String)
@@ -85,39 +118,74 @@ class DrawableSystem extends System
 class DebugSystem extends System
 {
     var labels:Map<Int, flash.text.TextField> = new Map();
+    var entitySet:EntitySet;
 
-    public function new()
+    public override function init()
     {
-        need([CTest, CPosition]);
+        entitySet = em.getEntitySet([CTest, CPosition]);
     }
 
-    public override function onEntityAdded(entity:Entity)
-    {
-        trace("ondebug added");
-        var pos = entity.get(CPosition);
-        var label = new flash.text.TextField();
-        label.textColor = 0xFF0000;
-        label.x = pos.x;
-        label.y = pos.y + 80;
-        label.text = "boom boom";
-        Lib.current.addChild(label);
-        labels.set(entity.id, label);
-    }
+    // public override function onEntityAdded(entity:Entity)
+    // {
+    //     trace("ondebug added");
+    //     var pos = entity.get(CPosition);
+    //     var label = new flash.text.TextField();
+    //     label.textColor = 0xFF0000;
+    //     label.x = pos.x;
+    //     label.y = pos.y + 80;
+    //     label.text = "boom boom";
+    //     Lib.current.addChild(label);
+    //     labels.set(entity.id, label);
+    // }
 
-    public override function onEntityRemoved(entity:Entity)
-    {
-        var label = labels.get(entity.id);
-        Lib.current.removeChild(label);
-        labels.remove(entity.id);
-    }
+    // public override function onEntityRemoved(entity:Entity)
+    // {
+    //     var label = labels.get(entity.id);
+    //     Lib.current.removeChild(label);
+    //     labels.remove(entity.id);
+    // }
 
-    public override function onEntityChange(entity:Entity)
-    {
-        var pos = entity.get(CPosition);
-        var label = labels.get(entity.id);
+    // public override function onEntityChange(entity:Entity)
+    // {
+    //     var pos = entity.get(CPosition);
+    //     var label = labels.get(entity.id);
 
-        label.x = pos.x;
-        label.y = pos.y + 80;
+    //     label.x = pos.x;
+    //     label.y = pos.y + 80;
+    // }
+
+    public override function loop()
+    {
+        entitySet.applyChanges();
+
+        for(entity in entitySet.entitiesAdded())
+        {
+            trace("ondebug added");
+            var pos = entity.get(CPosition);
+            var label = new flash.text.TextField();
+            label.textColor = 0xFF0000;
+            label.x = pos.x;
+            label.y = pos.y + 80;
+            label.text = "boom boom";
+            Lib.current.addChild(label);
+            labels.set(entity.id, label);
+        }
+
+        for(entity in entitySet.entitiesChanged())
+        {
+            var pos = entity.get(CPosition);
+            var label = labels.get(entity.id);
+
+            label.x = pos.x;
+            label.y = pos.y + 80;
+        }
+
+        for(entity in entitySet.entitiesRemoved())
+        {
+            var label = labels.get(entity.id);
+            Lib.current.removeChild(label);
+            labels.remove(entity.id);
+        }
     }
 }
 

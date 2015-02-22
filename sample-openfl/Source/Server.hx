@@ -35,7 +35,7 @@ class Server
     function onConnection(connection:Connection)
     {
         trace("onConnection");
-        var datPlayer = net.create("player");
+        var datPlayer = net.createEntity("player");
         net.bindEntity(connection, datPlayer);
         net.sendWorldStateTo(connection);
         trace("datplayer ID " + datPlayer.id);

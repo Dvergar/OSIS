@@ -37,28 +37,46 @@ class DummySystem extends System
 {
     public function new()
     {
-        need([CPosition]);
+        super();
+        // need([CPosition]);
+
     }
 
-    public override function onEntityChange(entity:Entity)
-    {
-        // trace("dummy change");
-    }
+    // public override function onEntityChange(entity:Entity)
+    // {
+    //     // trace("dummy change");
+    // }
 }
 
 
 class MovementSystem extends System
 {
-    public function new()
+    var entitySet:EntitySet;
+
+    public override function init()
     {
-        need([CPosition]);
+        entitySet = em.getEntitySet([CPosition]);
+
     }
 
-    public override function processEntity(entity:Entity)
+    // public override function processEntity(entity:Entity)
+    // {
+    //     var pos = entity.get(CPosition);
+    //     pos.x += 0.1;
+    //     net.markChanged(entity, pos);
+    // }
+
+    public override function loop()
     {
-        var pos = entity.get(CPosition);
-        pos.x += 0.1;
-        net.markChanged(entity, pos);
+        // trace("loop");
+        entitySet.applyChanges();
+
+        for(entity in entitySet.entities)
+        {
+            var pos = entity.get(CPosition);
+            pos.x += 0.1;
+            net.markChanged(entity, pos);
+        }
     }
 }
 

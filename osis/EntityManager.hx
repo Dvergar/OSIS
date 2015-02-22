@@ -12,30 +12,30 @@ import de.polygonal.ds.ListSet;
 typedef Connection = anette.Connection;
 
 
-class IdAssign
-{
-    #if macro
-    static var ids:Int = 1;
-    static public function _build(fields:Array<Field>):Array<Field>
-    {
-        var id = ids++;
-        trace("id " + id);
+// class IdAssign
+// {
+//     #if macro
+//     static var ids:Int = 1;
+//     static public function _build(fields:Array<Field>):Array<Field>
+//     {
+//         var id = ids++;
+//         trace("id " + id);
 
-        var def = macro class {public var _id:Int = $v{id};
-                               public static var __id:Int = $v{id}};
+//         var def = macro class {public var _id:Int = $v{id};
+//                                public static var __id:Int = $v{id}};
 
-        return fields.concat(def.fields);
-        return fields;
-    }
-    #end
+//         return fields.concat(def.fields);
+//         return fields;
+//     }
+//     #end
 
-    macro static public function build():Array<Field>
-    {
-        var fields = Context.getBuildFields();
-        fields = _build(fields);  // remove fields = _...
-        return fields;
-    }
-}
+//     macro static public function build():Array<Field>
+//     {
+//         var fields = Context.getBuildFields();
+//         fields = _build(fields);  // remove fields = _...
+//         return fields;
+//     }
+// }
 
 
 typedef CompTP = {public var _sid:Int;
@@ -94,19 +94,41 @@ class Entity
 }
 
 
-typedef SystemToAccessThatDamn_id = {> System, _id: Int}
-@:autoBuild(osis.IdAssign.build())
 class System
 {
+    public var em:EntityManager;
+    public var net:NetEntityManager;
+
+    public function new()
+    {
+    }
+
+    public function init() {}
+
+    public function loop() {}
+}
+
+
+class EntitySet
+{
+    public var _id:Int;
+    static var ids:Int = 0;
     public var code:Int = 0;
     public var entities:Array<Entity> = new Array();
     public var em:EntityManager;
-    public var net:NetEntityManager;
+
     public var adds:ListSet<Entity> = new ListSet();
     public var changes:ListSet<Entity> = new ListSet();
+    public var removes:ListSet<Entity> = new ListSet();
 
-    public function need(componentTypeList:Array<Dynamic>)
+    public var readableAdds:ListSet<Entity> = new ListSet();
+    public var readableChanges:ListSet<Entity> = new ListSet();
+    public var readableRemoves:ListSet<Entity> = new ListSet();
+
+    public function new(componentTypeList:Array<Dynamic>)
     {
+        this._id = ids++;
+
         for(componentType in componentTypeList)
         {
             trace("systemcode " + code);
@@ -115,15 +137,34 @@ class System
         }
     }
 
+    public function applyChanges()
+    {
+        readableAdds = adds;
+        readableChanges = changes;
+        readableRemoves = removes;
+
+        adds = new ListSet();
+        changes = new ListSet();
+        removes = new ListSet();
+    }
+
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
         em.markChanged(entity, component);
     }
 
-    public function processEntity(entity:Entity) {}
-    public function onEntityChange(entity:Entity) {}
-    public function onEntityAdded(entity:Entity) {}
-    public function onEntityRemoved(entity:Entity) {}
+    public function entitiesChanged()
+    {
+        return readableChanges;
+    }
+    public function entitiesAdded()
+    {
+        return readableAdds;
+    }
+    public function entitiesRemoved()
+    {
+        return readableRemoves;
+    }
 }
 
 
@@ -143,13 +184,18 @@ class Template
 }
 
 
+typedef ComponentDestroy = {entity:Entity, componentId:Int};
+
 #if !macro
 // YAML
 // @:build(osis.yec.Builder.build())
 #end
 class EntityManager
 {
-    var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
+    // var systems:haxe.ds.IntMap<SystemToAccessThatDamn_id> = new haxe.ds.IntMap();
+    var systems:Array<System> = new Array();
+    var entitySets:haxe.ds.IntMap<EntitySet> = new haxe.ds.IntMap(); // Why not array?
+    var componentsToDestroy:Array<ComponentDestroy> = new Array();
     // var self:EntityManager;  // YAML
     var templatesIds = 0;
     public var templatesByName:Map<String, Template> = new Map();
@@ -161,6 +207,14 @@ class EntityManager
     {
         this.net = new NetEntityManager(this);
         // this.self = this;  // YAML
+    }
+
+    public function getEntitySet(componentTypeList:Array<Dynamic>)
+    {
+        var entitySet = new EntitySet(componentTypeList);
+        trace("entityset " + entitySet);
+        entitySets.set(entitySet._id, entitySet);
+        return entitySet;
     }
 
     public function registerTemplate(name:String, func:Void->Entity)
@@ -196,19 +250,19 @@ class EntityManager
         entity.components[(untyped component)._id] = cast component;
         entity.code = entity.code | (1 << (untyped component)._id);
 
-        for(system in systems)
+        for(entitySet in entitySets)
         {
-            if( (system.code & entity.code) == system.code )
+            if( (entitySet.code & entity.code) == entitySet.code )
             {
-                var idCode = 0 | (1 << system._id);
+                var idCode = 0 | (1 << entitySet._id);
                 if( (entity.registeredSystemsCode & idCode) == idCode)
                 {
                     continue;
                 }
 
-                system.entities.push(entity);  // Doublons can happen with network
-                system.adds.set(entity);
-                entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << system._id);
+                entitySet.entities.push(entity);  // Doublons can happen with network
+                entitySet.adds.set(entity);
+                entity.registeredSystemsCode = entity.registeredSystemsCode | (1 << entitySet._id);
             }
         }
 
@@ -229,22 +283,22 @@ class EntityManager
     {
         entity.code = entity.code & ~(1 << componentId);
 
-        for(system in systems)
+        for(entitySet in entitySets)
         {
-            if( (system.code & entity.code) != system.code)
+            if( (entitySet.code & entity.code) != entitySet.code)
             {
-                var idCode = 0 | (1 << system._id);
+                var idCode = 0 | (1 << entitySet._id);
                 if( (entity.registeredSystemsCode & idCode) != idCode)
                     continue;
 
-                system.onEntityRemoved(entity);
-                system.entities.remove(entity);
-                system.changes.remove(entity);
-                entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << system._id);
+                entitySet.removes.set(entity);
+                entitySet.entities.remove(entity);
+                entitySet.changes.remove(entity);
+                entity.registeredSystemsCode = entity.registeredSystemsCode & ~(1 << entitySet._id);
             }
         }
         
-        entity.components[componentId] = null;
+        componentsToDestroy.push({entity:entity, componentId:componentId});  // TEMPORARY, hopefully
     }
 
     public function getComponent<T>(entity:Entity, componentType:Class<T>):T
@@ -252,37 +306,22 @@ class EntityManager
         return entity.get(componentType);
     }
 
-    public function addSystem<T:{_id:Int,
-                                 em:EntityManager,
-                                 net:NetEntityManager}>(system:T)
+    public function addSystem(system:System)
     {
         system.em = this;
         system.net = this.net;
-        systems.set(system._id, cast system);
+        system.init();
+        systems.push(system);
     }
 
     public function processAllSystems()
     {
-        // PROCESS LOOP
-        for(system in systems)
-        {
-            for(entity in system.adds)
-            {
-                system.onEntityAdded(entity);
-            }
+        for(system in systems) system.loop();
 
-            system.adds.clear();
+        for(_ in componentsToDestroy)
+            _.entity.components[_.componentId] = null;
 
-            for(entity in system.changes)
-            {
-                system.onEntityChange(entity);
-            }
-
-            system.changes.clear();
-
-            for(entity in system.entities)
-                system.processEntity(entity);
-        }
+        componentsToDestroy = new Array();
     }
 
     // FIXED UPDATE
@@ -322,14 +361,13 @@ class EntityManager
 
     public function markChanged<T:{var _id:Int;}>(entity:Entity, component:T)
     {
-
         for(i in 0...32)
         {
             if( (entity.registeredSystemsCode & 1 << i) != 0)
             {
-                var system = systems.get(i);
-                if( (system.code & (1 << component._id)) != 0 )
-                    system.changes.set(entity);
+                var entitySet = entitySets.get(i);
+                if( (entitySet.code & (1 << component._id)) != 0 )
+                    entitySet.changes.set(entity);
             }
         }
     }
