@@ -1,5 +1,6 @@
 package osis;
 
+import haxe.ds.IntMap;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
@@ -133,10 +134,9 @@ class Template
     public var func:Void->Entity;
     public var code:Int;
 
-    public function new(name:String)
+    public function new()
     {
         this.id = Template.ids++;
-        this.name = name;
     }
 }
 
@@ -150,7 +150,7 @@ typedef ComponentDestroy = {entity:Entity, componentId:Int};
 class EntityManager
 {
     var systems:Array<System> = new Array();
-    var entitySets:haxe.ds.IntMap<EntitySet> = new haxe.ds.IntMap(); // Why not array?
+    var entitySets:IntMap<EntitySet> = new IntMap(); // Why not array?
     var componentsToDestroy:Array<ComponentDestroy> = new Array();
 
     public var net:NetEntityManager;
@@ -199,6 +199,7 @@ class EntityManager
 
                 entitySet.entities.set(entity);
                 entitySet._adds.set(entity);
+                trace("adentity");
                 entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
         }
@@ -401,9 +402,9 @@ class NetEntityManager extends Net
 
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
-    public var entities:Map<Int, Entity> = new Map();
+    public var entities:IntMap<Entity> = new IntMap();
     var serializableTypes:Array<Class<Component>> = new Array();
-    var eventListeners:Map<Int, EventContainer> = new Map();
+    var eventListeners:IntMap<EventContainer> = new IntMap();
 
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Array<Template> = new Array();
@@ -640,7 +641,8 @@ class NetEntityManager extends Net
 
     public function registerTemplate(name:String, func:Void->Entity)
     {
-        var template = new Template(name);
+        var template = new Template();
+        template.name = name;
         template.func = func;
         templatesByName.set(name, template);
         templatesById[template.id] = template;
