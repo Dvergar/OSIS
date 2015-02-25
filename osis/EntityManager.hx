@@ -245,12 +245,14 @@ class EntityManager
         return entity.get(componentType);
     }
 
-    public function addSystem(system:System)
+    public function addSystem<T:System>(system:T)
     {
         system.em = this;
         system.net = this.net;
         system.init();
         systems.push(system);
+
+        return system;
     }
 
     public function processAllSystems()
