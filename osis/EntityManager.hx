@@ -39,6 +39,7 @@ class Entity
     public var id:Int;
     public var code:Int = 0;
     public var components:Array<Component> = new Array();
+    public var remComponents:Array<Bool> = new Array();
     public var registeredSetsCode:Int = 0;
 
     // NET
@@ -47,6 +48,7 @@ class Entity
     public function new()
     {
         this.id = ids++;
+        for(i in 0...32) remComponents[i] = false; // Neko, hehe :|
         trace("ENTITY ID " + id);
     }
 
@@ -62,7 +64,8 @@ class Entity
     {
         var comp:T = cast components[(untyped componentType).__id];
         if(comp == null) return false;
-        return true;
+
+        return !remComponents[(untyped componentType).__id];
     }
 }
 
@@ -237,6 +240,7 @@ class EntityManager
             }
         }
         
+        entity.remComponents[componentId] = true;
         componentsToDestroy.push({entity:entity, componentId:componentId});  // TEMPORARY, hopefully
     }
 
@@ -260,7 +264,10 @@ class EntityManager
         for(system in systems) system.loop();
 
         for(_ in componentsToDestroy)
+        {
             _.entity.components[_.componentId] = null;
+            _.entity.remComponents[_.componentId] = false;
+        }
 
         componentsToDestroy = new Array();
     }
