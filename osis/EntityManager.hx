@@ -182,6 +182,14 @@ class EntityManager
         for(component in entity.components)
             if(component != null)
                 removeComponentInstance(entity, component);
+
+        if(net.entities.get(entity.id) == entity)
+        {
+            trace("NETWORKED ENTITY DESTROYED");
+            net.entities.remove(entity.id);
+        }
+
+        trace("ENTITY DESTROYED");
     }
 
     public function addComponent<T:Component>(entity:Entity, component:T):T
@@ -411,7 +419,7 @@ class NetEntityManager extends Net
 
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
-    public var entities:IntMap<Entity> = new IntMap();
+    public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
     var serializableTypes:Array<Class<Component>> = new Array();
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
@@ -535,9 +543,7 @@ class NetEntityManager extends Net
             connection.output.writeInt16(entity.id);
         }
 
-        var entity = entities.get(entity.id);
         em.destroyEntity(entity);
-        entities.remove(entity.id);
     }
 
     inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection)
