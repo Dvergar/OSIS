@@ -202,7 +202,7 @@ class EntityManager
 
                 entitySet.entities.set(entity);
                 entitySet._adds.set(entity);
-                trace("adentity");
+                trace("add entity");
                 entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
         }
@@ -277,7 +277,7 @@ class EntityManager
     var skipTicks:Float = 1 / 60;
     var maxFrameSkip:Int = 100;
     var nextGameTick:Float = Time.now();
-    var netfps:Int = 20;
+    var netfps:Int = 30;
     var lastNetTick:Float = Time.now();
 
     public function fixedUpdate(func:Void->Void)

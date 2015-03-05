@@ -6,6 +6,7 @@
 -lib yaml
 -lib podstream
 -lib anette
+-lib miniprofiler
 -D server
 # -D yamlpath=./
 -debug

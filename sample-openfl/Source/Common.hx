@@ -13,7 +13,14 @@ class MessageHello implements IMessage
     @Short public var entityId:Int = -1;
 
     public function new() {}
+}
 
+
+class PingPong implements IMessage
+{
+    @Int public var frameId:Int;
+
+    public function new() {}
 }
 
 

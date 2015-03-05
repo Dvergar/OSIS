@@ -1,5 +1,3 @@
-package;
-
 import flash.display.Bitmap;
 import flash.display.Sprite;
 import flash.display.DisplayObject;
@@ -12,6 +10,7 @@ import flash.Lib;
 import openfl.Assets;
 
 import osis.EntityManager;
+import miniprofiler.Profiler;
 
 import Common;
 
@@ -143,6 +142,7 @@ class Client
         var ec = new EntityCreator(em);
         net = em.connect("127.0.0.1", 32000);
         net.registerEvent(MessageHello, onMessage);
+        net.registerEvent(PingPong, onPong);
         em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
         em.addSystem(new DebugSystem());
@@ -163,10 +163,36 @@ class Client
         net.sendEvent(msg);
     }
 
+    function onPong(msg:PingPong, connection:Connection)
+    {
+        trace("pong");
+        var latency = haxe.Timer.stamp() - frames[msg.frameId];
+        latency *= 1000;
+        trace(latency);
+    }
+
+    var lastSend:Float = 0;
+    var frameId:Int = 0;
+    var frames:Array<Float> = new Array();
+
     function loop(event:Event)
     {
+        frameId++;
+
         em.fixedUpdate(function()
         {
+            if(haxe.Timer.stamp() - lastSend > 1)
+            {
+                var ping = new PingPong();
+                ping.frameId = frameId;
+                net.sendEvent(ping);
+
+                lastSend = haxe.Timer.stamp();
+                frames[frameId] = lastSend;
+
+                trace("send");
+            }
+
             em.processAllSystems();
         });
     }

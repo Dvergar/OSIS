@@ -1,5 +1,7 @@
-import osis.EntityManager;
 import Common;
+
+import osis.EntityManager;
+import miniprofiler.Profiler;
 
 
 class Server
@@ -15,6 +17,7 @@ class Server
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
         net.registerEvent(MessageHello, onMessage);
+        net.registerEvent(PingPong, onPing);
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 
@@ -30,6 +33,12 @@ class Server
     function onMessage(msg:MessageHello, connection:Connection)
     {
         trace("Message: " + msg.txt);
+    }
+
+    function onPing(msg:PingPong, connection:Connection)
+    {
+        trace("ping");
+        net.sendEvent(msg);
     }
     
     function onConnection(connection:Connection)

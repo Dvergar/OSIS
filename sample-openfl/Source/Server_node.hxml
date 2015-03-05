@@ -7,6 +7,7 @@
 -lib podstream
 -lib anette
 -lib nodejs
+-lib miniprofiler
 -D server
 -D nodejs
 # -D yamlpath=./
