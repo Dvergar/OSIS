@@ -210,7 +210,6 @@ class EntityManager
 
                 entitySet.entities.set(entity);
                 entitySet._adds.set(entity);
-                trace("add entity");
                 entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
         }
@@ -232,7 +231,6 @@ class EntityManager
     inline function _removeComponent(entity:Entity, componentId:Int)
     {
         entity.code = entity.code & ~(1 << componentId);
-
         for(entitySet in entitySets)
         {
             if( (entitySet.code & entity.code) != entitySet.code)
@@ -627,6 +625,9 @@ class NetEntityManager extends Net
 
     public function markChanged<T:Component>(entity:Entity, component:T)
     {
+        if(component._sid == -1)
+            throw 'Component $component is not serializable';
+
         em.markChanged(entity, component);
 
         for(connection in socket.connections)
@@ -736,17 +737,17 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     var entity = entities.get(entityId);
                     var componentTypeId = connection.input.readInt8();
-                    // trace("ADD_COMPONENT " + componentTypeId);
+                    trace("ADD_COMPONENT " + componentTypeId);
                     var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var component:Component = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
                     em.addComponent(entity, component);
 
                 case REMOVE_COMPONENT:
-                    trace("REMOVE_COMPONENT");
                     var entityId = connection.input.readInt16();
                     var componentTypeId = connection.input.readInt8();
                     var componentType:Class<Component> = cast serializableTypes[componentTypeId];
+                    trace("REMOVE_COMPONENT " + untyped(componentType));
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
                     em.removeComponentInstance(entity, component);
@@ -756,11 +757,19 @@ class NetEntityManager extends Net
                     var componentTypeId = connection.input.readInt8();
                     var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var entity = entities.get(entityId);
-                    var component = entity.get(componentType);
-                    // trace("UPDATE_COMPONENT");
-                    // trace(component._id);
-                    component.unserialize(connection.input);
-                    em.markChanged(entity, component);
+                    // trace("UPDATE_COMPONENT ID " + componentTypeId);
+                    // trace("UPDATE_COMPONENT " + untyped(componentType));
+
+                    if(entity != null)
+                    {
+                        var component = entity.get(componentType);
+                        component.unserialize(connection.input);
+                        em.markChanged(entity, component);
+                    }
+                    else
+                    {
+                        trace("COMPONENT_UPDATE received but the entity doesn't exist anymore, skipping");
+                    }
 
                 case EVENT:
                     // trace("EVENT");
