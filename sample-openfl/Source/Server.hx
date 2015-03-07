@@ -1,7 +1,6 @@
 import Common;
 
 import osis.EntityManager;
-import miniprofiler.Profiler;
 
 
 class Server

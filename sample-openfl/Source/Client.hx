@@ -10,7 +10,6 @@ import flash.Lib;
 import openfl.Assets;
 
 import osis.EntityManager;
-import miniprofiler.Profiler;
 
 import Common;
 
