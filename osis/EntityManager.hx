@@ -172,6 +172,15 @@ class EntityManager
         return entitySet;
     }
 
+    public function getSystem<T:System>(systemClass:Class<T>):T
+    {
+        // MEH
+        for(system in systems)
+            if(Std.is(system, systemClass)) return cast system;
+
+        return null;
+    }
+
     public function createEntity():Entity
     {
         return new Entity();
