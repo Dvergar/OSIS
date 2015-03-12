@@ -21,5 +21,5 @@ I'm not comfortable in advertising OSIS until i spent enough time with the libra
 
 **Limitations**
 
-* Based on my network library [Anette](https://github.com/Dvergar/Anette) which is actually broken on the JS target, OSIS is inheriting the same issue
+* Based on my network library [Anette](https://github.com/Dvergar/Anette) which is actually broken on the server websocket/JS target, OSIS is inheriting the same issue
 * 32 components max, 32 systems max (will patch when reaching the limit myself :))
