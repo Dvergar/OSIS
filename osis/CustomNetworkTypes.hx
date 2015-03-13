@@ -19,8 +19,10 @@ class CustomNetworkTypes
                 return a;
             },
             unserialize: function(varNameIn:String) {
-                return [ macro _netEntityId = bi.readInt32(),
-                         macro _net = true];
+                var a = [];
+                a.push( macro var _netEntityId = bi.readInt32() );
+                a.push( macro $i{varNameIn} =  NetEntityManager.instance.entities.get(_netEntityId) );
+                return a;
             }
         };
 
