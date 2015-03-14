@@ -504,10 +504,10 @@ class NetEntityManager extends Net
         var entity:Entity = template.func();
 
         // SEND IT
-        return sendEntity(name, entity);
+        return sendFactoryEntity(name, entity);
     }
 
-    public function sendEntity(name:String, entity:Entity):Entity
+    public function sendFactoryEntity(name:String, entity:Entity):Entity
     {
         trace("sendEntity " + name);
         var template = templatesByName.get(name);
@@ -525,6 +525,26 @@ class NetEntityManager extends Net
 
         return entity;
     }
+
+    // public function sendEntity(entity:Entity):Entity
+    // {
+    //     for(connection in socket.connections)
+    //     {   
+    //         sendCreate(connection.output, entity);
+    //         for(pos in 0...32)
+    //         {
+    //             if( (entity.code & 1 << pos) != 0)
+    //             {
+    //                 if(entity.components[pos]._sid == -1) continue;
+    //                 sendAddComponent(entity.id, entity.components[pos], connection);
+    //             }
+    //         }
+    //     }
+
+    //     entities.set(entity.id, entity);
+
+    //     return entity;
+    // }
 
     function sendCreate(output:haxe.io.BytesOutput, entity:Entity)
     {
