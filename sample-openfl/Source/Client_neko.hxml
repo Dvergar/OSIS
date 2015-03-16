@@ -1,0 +1,13 @@
+-main Client.hx
+-neko "D:\Prog\#BUILDS\sample_client.n"
+
+-lib osis
+-lib polygonal-ds
+-lib yaml
+-lib podstream
+-lib anette
+-D client
+# -D yamlpath=./
+-debug
+
+-cmd "neko D:\Prog\#BUILDS\sample_client.n"
