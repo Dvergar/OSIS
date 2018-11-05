@@ -7,10 +7,28 @@ import haxe.macro.Context;
 import anette.*;
 import anette.Protocol;
 import anette.Bytes;
-import de.polygonal.ds.ListSet;
+// import de.polygonal.ds.ListSet;
 
+using EntityManager.ArrayEntityExtender;
 
 typedef Connection = anette.Connection;
+typedef ListSet<T> = Array<T>;
+
+
+class ArrayEntityExtender {
+    static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
+    {
+        for(item in arr) if(item == newItem) return true;
+        return false;
+    }
+    static public function set(arr:Array<Entity>, newItem:Entity):Bool
+    {
+        for(item in arr) if(item == newItem) return false;
+        arr.push(newItem);
+        return true;
+    }
+}
+
 
 
 @:autoBuild(osis.CustomNetworkTypes.build())
@@ -106,7 +124,8 @@ class EntitySet
         {
             trace("systemcode " + code);
             trace((untyped componentType).__id);
-            trace("Adding component ID" + (untyped componentType).__id);
+            trace("Adding component ID :");
+            trace((untyped componentType).__id);
             code = code | (1 << (untyped componentType).__id);
         }
     }
@@ -440,11 +459,15 @@ class NetEntityManager extends Net
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
         var serializables = podstream.SerializerMacro.getSerialized();
 
+        // ONLY RELATED TO '''NETWORK''' SERIALIZABLE TYPES
         for(serializable in serializables)
         {
-            if(serializable == null) continue;
+            if(serializable == null) continue; // Shouldn't be in the array in the first place !??
             var componentType:Class<Component> = cast Type.resolveClass(serializable);
-            serializableTypes[(untyped componentType).__sid] = componentType;
+            var componentId = (untyped componentType).__sid;
+            if(componentId == -1) continue; // serialized but not networked
+
+            serializableTypes[componentId] = componentType;
         }
 
         trace("componentTypes " + serializableTypes);

@@ -2,7 +2,7 @@ import osis.EntityManager;
 
 
 #if client
-import Client;
+import ClientRaw;
 #end
 
 

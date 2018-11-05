@@ -7,5 +7,8 @@
 	"version": "0.0.1",
 	"releasenote": "First release",
 	"contributors": [ "caribou" ],
-	"dependencies": {}
+	"dependencies" : {
+		"anette" : "",
+		"polygonal-ds" : ""
+	}
 }

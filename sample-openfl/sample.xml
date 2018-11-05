@@ -8,15 +8,15 @@
     <!-- <source path="./../libs/polygonal-printf/src/"/> -->
     <!-- <source path="./../libs/hx-yaml/src/"/> -->
     <!-- <source path="./../libs/podstream/src/"/> -->
-    <source path="./../src" />
+    <!-- <source path="./../src" /> -->
     <haxelib name="openfl" />
-    <haxelib name="yaml" />
+    <!-- <haxelib name="yaml" /> -->
     <haxelib name="podstream" />
     <haxelib name="anette" />
     <haxelib name="osis" />
     <haxelib name="polygonal-ds" />
-    <haxelib name="miniprofiler" />
-    <haxeflag name="-D yamlpath=Source\" />
+    <!-- <haxelib name="miniprofiler" /> -->
+    <!-- <haxeflag name="-D yamlpath=Source\" /> -->
     <haxedef name="client" />
     <!-- <haxedef name="HXCPP" /> -->
     <assets path="Assets" rename="assets" />

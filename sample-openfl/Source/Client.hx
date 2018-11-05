@@ -138,6 +138,7 @@ class Client
 
     public function new()
     {
+        trace("plop");
         var ec = new EntityCreator(em);
         net = em.connect("127.0.0.1", 32000);
         net.registerEvent(MessageHello, onMessage);
@@ -194,5 +195,10 @@ class Client
 
             em.processAllSystems();
         });
+    }
+
+    public static function main() {
+        // Lib.current.addChild(new LD23());
+
     }
 }

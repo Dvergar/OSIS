@@ -1,5 +1,5 @@
 -main Server.hx
--cpp "C:\prog\#BUILDS\ecs\"
+-neko "C:\prog\#BUILDS\ecs\server.n"
 
 -lib osis
 -lib polygonal-ds
@@ -10,4 +10,4 @@
 # -D yamlpath=./
 -debug
 
--cmd "C:\prog\#BUILDS\ecs\Server-debug.exe"
+-cmd "neko C:\prog\#BUILDS\ecs\server.n"

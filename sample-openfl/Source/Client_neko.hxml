@@ -1,4 +1,4 @@
--main Client.hx
+-main ClientRaw.hx
 -neko "D:\Prog\#BUILDS\sample_client.n"
 
 -lib osis

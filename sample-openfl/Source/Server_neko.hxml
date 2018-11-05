@@ -5,7 +5,7 @@
 -lib polygonal-ds
 -lib yaml
 -lib podstream
--lib anette
+# -lib anette
 -D server
 # -D yamlpath=./
 -debug

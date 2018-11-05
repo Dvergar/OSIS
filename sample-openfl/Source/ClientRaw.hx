@@ -1,5 +1,5 @@
 import osis.EntityManager;
-import miniprofiler.Profiler;
+// import miniprofiler.Profiler;
 
 import Common;
 
@@ -121,7 +121,7 @@ class DrawableSystem extends System
 // }
 
 
-class Client
+class ClientRaw
 {
     var em:EntityManager = new EntityManager();
     var net:NetEntityManager;
@@ -193,6 +193,6 @@ class Client
 
     static function main()
     {
-        new Client();
+        new ClientRaw();
     }
 }
