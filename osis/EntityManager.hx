@@ -7,7 +7,6 @@ import haxe.macro.Context;
 import anette.*;
 import anette.Protocol;
 import anette.Bytes;
-// import de.polygonal.ds.ListSet;
 
 using EntityManager.ArrayEntityExtender;
 
@@ -28,7 +27,6 @@ class ArrayEntityExtender {
         return true;
     }
 }
-
 
 
 @:autoBuild(osis.CustomNetworkTypes.build())
