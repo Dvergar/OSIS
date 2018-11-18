@@ -51,8 +51,8 @@ interface IMessage
 
 class Entity
 {
-    static var ids:Int = 0;
     public var id:Int;
+    static var ids:Int = 0;
     public var code:Int = 0;
     public var components:Array<Component> = new Array();
     public var remComponents:Array<Bool> = new Array();
@@ -60,6 +60,9 @@ class Entity
 
     // NET
     public var templateId:Int;
+    #if client
+    public var netId:Int;
+    #end
 
     public function new()
     {
@@ -120,10 +123,10 @@ class EntitySet
 
         for(componentType in componentTypeList)
         {
-            trace("systemcode " + code);
-            trace((untyped componentType).__id);
-            trace("Adding component ID :");
-            trace((untyped componentType).__id);
+            // trace("Systemcode " + code); // DEBUG
+            // trace((untyped componentType).__id); // DEBUG
+            // trace("Adding component ID :"); // DEBUG
+            // trace((untyped componentType).__id); // DEBUG
             code = code | (1 << (untyped componentType).__id);
         }
     }
@@ -583,6 +586,12 @@ class NetEntityManager extends Net
         }
 
         em.destroyEntity(entity);
+
+        // CLEANUP
+        var connection = connections.get(entity);
+        entitiesByConnection.remove(connection);
+        connections.remove(entity);  // TEMP
+
     }
 
     inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection)
@@ -765,6 +774,7 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     trace("CREATE_ENTITY " + entityId);
                     var entity = em.createEntity();
+                    entity.netId = entityId;
                     entities.set(entityId, entity);
 
                 case DESTROY_ENTITY:
@@ -824,6 +834,7 @@ class NetEntityManager extends Net
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
                     var entity = templatesById[templateId].func();
+                    entity.netId = entityId;
                     entities.set(entityId, entity);
             }
         }
