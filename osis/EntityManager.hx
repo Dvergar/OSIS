@@ -1,6 +1,7 @@
 package osis;
 
 import haxe.ds.IntMap;
+import haxe.ds.Vector;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
@@ -14,7 +15,8 @@ typedef Connection = anette.Connection;
 typedef ListSet<T> = Array<T>;
 
 
-class ArrayEntityExtender {
+class ArrayEntityExtender
+{
     static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
     {
         for(item in arr) if(item == newItem) return true;
@@ -25,6 +27,22 @@ class ArrayEntityExtender {
         for(item in arr) if(item == newItem) return false;
         arr.push(newItem);
         return true;
+    }
+}
+
+
+class EntityExtender
+{
+    static public var em:EntityManager;
+    static public inline function add<T:Component>(entity:Entity, component:T):T
+    {
+        em.addComponent(entity, component);
+        return component;
+    }
+
+    static public inline function remove<T:Class<Component>>(entity:Entity, componentType:T)
+    {
+        em.removeComponent(entity, componentType);
     }
 }
 
@@ -54,8 +72,8 @@ class Entity
     public var id:Int;
     static var ids:Int = 0;
     public var code:Int = 0;
-    public var components:Array<Component> = new Array();
-    public var remComponents:Array<Bool> = new Array();
+    public var components:Vector<Component> = new Vector(32);
+    public var remComponents:Vector<Bool> = new Vector(32);
     public var registeredSetsCode:Int = 0;
 
     // NET
@@ -181,11 +199,12 @@ class EntityManager
 
     public function new()
     {
+        EntityExtender.em = this;
         this.net = new NetEntityManager(this);
         // this.self = this;  // YAML
     }
 
-    public function getEntitySet(componentTypeList:Array<Class<Component>>)
+    public function getEntitySet(componentTypeList:Array<Class<Component>>):EntitySet
     {
         var entitySet = new EntitySet(this, componentTypeList);
         entitySets.set(entitySet._id, entitySet);
@@ -201,7 +220,7 @@ class EntityManager
     {
         for(component in entity.components)
             if(component != null)
-                removeComponentInstance(entity, component);
+                _removeComponentInstance(entity, component);
 
         if(net.entities.get(entity.id) == entity)
         {
@@ -238,7 +257,7 @@ class EntityManager
     }
 
     @:allow(osis.NetEntityManager)
-    function removeComponentInstance<T:Component>(entity:Entity, component:T)
+    inline function _removeComponentInstance<T:Component>(entity:Entity, component:T)
     {
         _removeComponent(entity, component._id);
     }
@@ -299,11 +318,13 @@ class EntityManager
     }
 
     // FIXED UPDATE
+    public var skipTicks:Float = 1 / 60;
+    public var maxFrameSkip:Int = 100;
+    public var netfps:Int = 30;
+
+    // INIT
     var loops:Int = 0;
-    var skipTicks:Float = 1 / 60;
-    var maxFrameSkip:Int = 100;
     var nextGameTick:Float = Time.now();
-    var netfps:Int = 30;
     var lastNetTick:Float = Time.now();
 
     public function fixedUpdate(func:Void->Void)
@@ -801,7 +822,7 @@ class NetEntityManager extends Net
                     trace("REMOVE_COMPONENT " + untyped(componentType));
                     var entity = entities.get(entityId);
                     var component = entity.get(componentType);
-                    em.removeComponentInstance(entity, component);
+                    em._removeComponentInstance(entity, component);
 
                 case UPDATE_COMPONENT:
                     var entityId = connection.input.readInt16();
