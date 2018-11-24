@@ -44,6 +44,11 @@ class EntityExtender
     {
         em.removeComponent(entity, componentType);
     }
+
+    static public inline function destroy(entity:Entity)
+    {
+        em.destroyEntity(entity);
+    }
 }
 
 
@@ -86,7 +91,7 @@ class Entity
     {
         this.id = ids++;
         for(i in 0...32) remComponents[i] = false; // Neko, hehe :|
-        trace("ENTITY ID " + id);
+        // trace("ENTITY ID " + id); // DEBUG
     }
 
     public function get<T:Component>(componentType:Class<T>):T
@@ -850,7 +855,7 @@ class NetEntityManager extends Net
 
                 case CREATE_TEMPLATE_ENTITY:
                     var entityId = connection.input.readInt16();
-                    trace("CREATE_TEMPLATE_ENTITY " + entityId);
+                    // trace("CREATE_TEMPLATE_ENTITY " + entityId); // DEBUG
                     var templateId = connection.input.readInt8();
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
