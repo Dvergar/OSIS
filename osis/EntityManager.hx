@@ -559,7 +559,7 @@ class NetEntityManager extends Net
 
     public function sendFactoryEntity(name:String, entity:Entity):Entity
     {
-        trace("sendEntity " + name);
+        // trace("sendEntity " + name); // DEBUG
         var template = templatesByName.get(name);
         if(template == null) throw 'Template $name doesn\'t exists';
         entity.templateId = template.id;
@@ -748,6 +748,7 @@ class NetEntityManager extends Net
     function receiveEvent(messageTypeId:Int, connection:Connection)
     {
         var eventContainer:EventContainer = eventListeners.get(messageTypeId);
+        if(eventContainer == null) throw("No event  registered for " + messageTypeId);
         eventContainer.message.unserialize(connection.input);
         eventContainer.func(eventContainer.message, connection);
     }
@@ -814,7 +815,7 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     var entity = entities.get(entityId);
                     var componentTypeId = connection.input.readInt8();
-                    trace("ADD_COMPONENT " + componentTypeId);
+                    // trace("ADD_COMPONENT " + componentTypeId); // DEBUG
                     var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var component:Component = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
