@@ -109,6 +109,20 @@ class Entity
 
         return !remComponents[(untyped componentType).__id];
     }
+
+    public function toString()
+    {
+        var entityString = "Entity : " + id;
+
+        for(comp in components)
+        {
+            if(comp == null) continue;
+            var className = Type.getClassName(Type.getClass(comp));
+            entityString += " <" + className + ">";
+        }
+
+        return entityString;
+    }
 }
 
 
@@ -464,7 +478,8 @@ class NetEntityManager extends Net
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
-    var serializableTypes:Array<Class<Component>> = new Array();
+    var serializableTypes:Array<Class<Component>> = new Array(); // SERIALIZED SPECIFIC IDS
+    var allTypes:Array<Class<Component>> = new Array(); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
     public var templatesByName:Map<String, Template> = new Map();
@@ -491,10 +506,15 @@ class NetEntityManager extends Net
         {
             if(serializable == null) continue; // Shouldn't be in the array in the first place !??
             var componentType:Class<Component> = cast Type.resolveClass(serializable);
-            var componentId = (untyped componentType).__sid;
-            if(componentId == -1) continue; // serialized but not networked
 
-            serializableTypes[componentId] = componentType;
+            // NETWORKED COMPONENTS
+            var componentNetId = (untyped componentType).__sid;
+            if(componentNetId != -1) 
+                serializableTypes[componentNetId] = componentType;
+
+            // ALL COMPONENTS
+            var componentId = (untyped componentType).__id;
+            allTypes[componentId] = componentType;
         }
 
         trace("componentTypes " + serializableTypes);
@@ -620,12 +640,14 @@ class NetEntityManager extends Net
 
     }
 
-    inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection)
+    inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection):T
     {
         conn.output.writeInt8(ADD_COMPONENT);
         conn.output.writeInt16(entityId);
         conn.output.writeInt8(component._sid);
         component.serialize(conn.output);
+
+        return component;
     }
 
     public function addComponent<T:Component>(entity:Entity, component:T):T
@@ -635,6 +657,11 @@ class NetEntityManager extends Net
 
         em.addComponent(entity, component);
         return component;
+    }
+
+    public function addComponentTo<T:Component>(entity:Entity, component:T, connEntity:Entity):T
+    {
+        return sendAddComponent(entity.id, component, connections.get(connEntity));
     }
 
     inline function sendRemoveComponent(entityId:Int, componentId:Int, connection:Connection)
@@ -660,15 +687,17 @@ class NetEntityManager extends Net
         for(entity in entities)
         {
             if(entity == connectionEntity) continue;
+
             sendCreate(connection.output, entity);
             sendDeltas(connection, entity);
         }
     }
 
-    inline function sendDeltas(connection:Connection, entity:Entity)
+    function sendDeltas(connection:Connection, entity:Entity)
     {
         var templateCode = templatesById[entity.templateId].code;
         var deltaCode = entity.code ^ templateCode;
+
         for(pos in 0...32)
         {
             // CHECK IF COMPONENT REMOVED FROM TEMPLATE
@@ -685,8 +714,11 @@ class NetEntityManager extends Net
                 }
                 else
                 {
-                    if(entity.components[pos]._sid == -1) continue;
-                    sendRemoveComponent(entity.id, pos, connection);
+                    // if(entity.components[pos]._sid == -1) continue;
+                    var sid = (cast allTypes[pos]).__sid;
+                    if(sid == -1) continue;
+                    var compName = Type.getClassName(allTypes[pos]);
+                    sendRemoveComponent(entity.id, sid, connection);
                 }
             }
 
