@@ -1,0 +1,1 @@
+haxe build_hl.hxml && hl testall.hl

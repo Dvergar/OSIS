@@ -1,5 +1,31 @@
 import osis.EntityManager;
-import snail.Test;
+
+
+class Test
+{
+    public static function assertTrue(b:Bool):Void
+    {
+        if (b == false)
+            throw "expected true but was false";
+    }
+
+    public static function assertFalse(b:Bool):Void
+    {
+        if (b == true)
+            throw "expected false but was true";
+    }
+
+    public static function assertEquals<T>(expected:T, actual:T):Void
+    {
+        if (actual != expected)
+            throw "expected '" + expected + "' but was '" + actual + "'";
+    }
+
+    public static function run(func:Void->Void)
+    {
+
+    }
+}
 
 
 class TestAll
@@ -19,8 +45,6 @@ class TestAll
 
         //// FIRST ID SHOULD BE 0
         Test.assertEquals(entity.id, 0);
-        /// TEMPLATE ID CHECK
-        Test.assertEquals(entity.templateId, null);
 
         // ENTITYSET TEST
         var entitySet = em.getEntitySet([CPosition, CVector]);
@@ -32,18 +56,18 @@ class TestAll
         em.addComponent(entity, new CVector());
 
         //// CHECKING IF ENTITY HAS BEEN ADDED
-        Test.assertEquals(entitySet._adds.size(), 1);
-        Test.assertEquals(entitySet.adds.size(), 0);
+        Test.assertEquals(entitySet._adds.length, 1);
+        Test.assertEquals(entitySet.adds.length, 0);
 
         //// CHECKING APPLYCHANGES ON ADDED
         entitySet.applyChanges();
-        Test.assertEquals(entitySet.adds.size(), 1);
-        Test.assertEquals(entitySet._adds.size(), 0);
+        Test.assertEquals(entitySet.adds.length, 1);
+        Test.assertEquals(entitySet._adds.length, 0);
 
         //// CHECKING APPLYCHANGES ON REMOVE
         em.removeComponent(entity, CVector);
         entitySet.applyChanges();
-        Test.assertEquals(entitySet.removes.size(), 1);
+        Test.assertEquals(entitySet.removes.length, 1);
     }
 
     static function main():Void

@@ -1,14 +1,12 @@
 -main TestAll.hx
--neko "D:\Prog\#BUILDS\test.n"
+-hl testall.hl
 
 -lib osis
 -lib polygonal-ds
--lib yaml
 -lib podstream
 -lib anette
--lib snail
 -D server
+# -lib yaml
+# -lib snail
 # -D yamlpath=./
 -debug
-
-# -cmd "neko D:\Prog\#BUILDS\test.n"
