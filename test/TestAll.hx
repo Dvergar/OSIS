@@ -74,10 +74,6 @@ class TestAll
     {
         new TestAll();
         trace("All tests passed");
-
-        // #if sys
-        // Sys.exit(success ? 0 : 1);
-        // #end
     }
 }
 

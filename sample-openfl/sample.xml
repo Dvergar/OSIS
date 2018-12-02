@@ -14,10 +14,7 @@
     <haxelib name="podstream" />
     <haxelib name="anette" />
     <haxelib name="osis" />
-    <haxelib name="polygonal-ds" />
-    <!-- <haxelib name="miniprofiler" /> -->
     <!-- <haxeflag name="-D yamlpath=Source\" /> -->
     <haxedef name="client" />
-    <!-- <haxedef name="HXCPP" /> -->
     <assets path="Assets" rename="assets" />
 </project>

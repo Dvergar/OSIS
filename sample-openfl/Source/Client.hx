@@ -1,12 +1,12 @@
-import flash.display.Bitmap;
-import flash.display.Sprite;
-import flash.display.DisplayObject;
-import flash.display.DisplayObjectContainer;
-import flash.events.KeyboardEvent;
-import flash.events.MouseEvent;
-import flash.events.Event;
-import flash.ui.Keyboard;
-import flash.Lib;
+import openfl.display.Bitmap;
+import openfl.display.Sprite;
+import openfl.display.DisplayObject;
+import openfl.display.DisplayObjectContainer;
+import openfl.events.KeyboardEvent;
+import openfl.events.MouseEvent;
+import openfl.events.Event;
+import openfl.ui.Keyboard;
+import openfl.Lib;
 import openfl.Assets;
 
 import osis.EntityManager;
@@ -197,8 +197,5 @@ class Client
         });
     }
 
-    public static function main() {
-        // Lib.current.addChild(new LD23());
-
-    }
+    public static function main() {}
 }

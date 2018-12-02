@@ -1,0 +1,1 @@
+haxe Server.hxml && hl server.hl

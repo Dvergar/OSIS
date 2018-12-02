@@ -1,13 +1,10 @@
 -main Server.hx
--neko "C:\prog\#BUILDS\ecs\server.n"
+-hl server.hl
 
 -lib osis
--lib polygonal-ds
 -lib yaml
 -lib podstream
 -lib anette
 -D server
 # -D yamlpath=./
 -debug
-
--cmd "neko C:\prog\#BUILDS\ecs\server.n"
