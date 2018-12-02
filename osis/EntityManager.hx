@@ -181,7 +181,7 @@ class EntitySet
 
     public function markChanged<T:Component>(entity:Entity, component:T)
     {
-        em.markChanged(entity, component);
+        em.markChanged(entity, component, this);
     }
 }
 
@@ -373,15 +373,18 @@ class EntityManager
     //     return Reflect.field(this, type)();
     // }
 
-    public function markChanged<T:Component>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
         for(i in 0...32)
         {
             if( (entity.registeredSetsCode & 1 << i) != 0)
             {
-                var entitySet = entitySets.get(i);
-                if( (entitySet.code & (1 << component._id)) != 0 )
-                    entitySet._changes.set(entity);
+                var tmpEntitySet = entitySets.get(i);
+                if( (tmpEntitySet.code & (1 << component._id)) != 0 )
+                {
+                    if(tmpEntitySet != null && tmpEntitySet == entitySet) continue;
+                    tmpEntitySet._changes.set(entity);
+                }
             }
         }
     }
@@ -478,8 +481,8 @@ class NetEntityManager extends Net
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
-    var serializableTypes:Array<Class<Component>> = new Array(); // SERIALIZED SPECIFIC IDS
-    var allTypes:Array<Class<Component>> = new Array(); // ALL COMPONENTS IDS
+    var serializableTypes:Vector<Class<Component>> = new Vector(32); // SERIALIZED SPECIFIC IDS
+    var allTypes:Vector<Class<Component>> = new Vector(32); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
     public var templatesByName:Map<String, Template> = new Map();
@@ -731,12 +734,12 @@ class NetEntityManager extends Net
         }
     }
 
-    public function markChanged<T:Component>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
         if(component._sid == -1)
             throw 'Component $component is not serializable';
 
-        em.markChanged(entity, component);
+        em.markChanged(entity, component, entitySet);
 
         for(connection in socket.connections)
         {
@@ -899,7 +902,7 @@ class NetEntityManager extends Net
         }
     }
 
-    public function markChanged<T:Component>(entity:Entity, component:T)
+    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
         // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
         // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
