@@ -246,7 +246,7 @@ class Template
 }
 
 
-typedef ComponentDestroy = {entity:Entity, componentId:Int};
+typedef ComponentDestroyData = {entity:Entity, componentId:Int};
 
 #if !macro
 // YAML
@@ -255,8 +255,8 @@ typedef ComponentDestroy = {entity:Entity, componentId:Int};
 class EntityManager
 {
     var systems:Array<System> = new Array();
-    var entitySets:IntMap<EntitySet> = new IntMap(); // Why not array?
-    var componentsToDestroy:Array<ComponentDestroy> = new Array();
+    var entitySets:Array<EntitySet> = new Array();
+    var componentsToDestroy:Array<ComponentDestroyData> = new Array();
 
     public var net:NetEntityManager;
     // var self:EntityManager;  // YAML
@@ -271,7 +271,7 @@ class EntityManager
     public function getEntitySet(componentTypeList:Array<Class<Component>>):EntitySet
     {
         var entitySet = new EntitySet(this, componentTypeList);
-        entitySets.set(entitySet._id, entitySet);
+        entitySets.push(entitySet);
         return entitySet;
     }
 
@@ -414,17 +414,17 @@ class EntityManager
     //     return Reflect.field(this, type)();
     // }
 
-    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
+    public function markChanged<T:Component>(entity:Entity, component:T, ?filterEntitySet:EntitySet)
     {
-        for(componentId in 0...40)
+        for(entitySet in entitySets)
         {
-            if(entity.registeredSetsCode.contains(componentId))
+            if(entity.registeredSetsCode.contains(entitySet._id))
             {
-                var tmpEntitySet = entitySets.get(componentId);
-                if(tmpEntitySet.code.contains(component._id))
+                // var tmpEntitySet = entitySets.get(componentId);
+                if(entitySet.code.contains(component._id))
                 {
-                    if(tmpEntitySet != null && tmpEntitySet == entitySet) continue;
-                    tmpEntitySet._changes.set(entity);
+                    if(entitySet != null && entitySet == filterEntitySet) continue;
+                    entitySet._changes.set(entity);
                 }
             }
         }
