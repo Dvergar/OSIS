@@ -117,7 +117,7 @@ class Entity
     public function new()
     {
         this.id = ids++;
-        for(i in 0...64) remComponents[i] = false; // Neko, hehe :|
+        for(i in 0...C.MAX_COMPONENTS) remComponents[i] = false; // Neko, hehe :|
     }
 
     public function get<T:Component>(componentType:Class<T>):T
