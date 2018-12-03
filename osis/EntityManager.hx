@@ -93,7 +93,7 @@ class BitSets
 }
 
 
-@:enum abstract C(Int) to Int
+@:enum abstract CONSTANTS(Int) to Int
 {
     var MAX_COMPONENTS = 64;
 }
@@ -104,8 +104,8 @@ class Entity
     public var id:Int;
     static var ids:Int = 0;
     public var code:Int64 = 0;
-    public var components:Vector<Component> = new Vector(C.MAX_COMPONENTS);
-    public var remComponents:Vector<Bool> = new Vector(C.MAX_COMPONENTS);
+    public var components:Vector<Component> = new Vector(MAX_COMPONENTS);
+    public var remComponents:Vector<Bool> = new Vector(MAX_COMPONENTS);
     public var registeredSetsCode:Int64 = 0;
 
     // NET
@@ -117,7 +117,7 @@ class Entity
     public function new()
     {
         this.id = ids++;
-        for(i in 0...C.MAX_COMPONENTS) remComponents[i] = false; // Neko, hehe :|
+        for(i in 0...MAX_COMPONENTS) remComponents[i] = false; // Neko, hehe :|
     }
 
     public function get<T:Component>(componentType:Class<T>):T
@@ -508,8 +508,8 @@ class NetEntityManager extends Net
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
-    var serializableTypes:Vector<Class<Component>> = new Vector(C.MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
-    var allTypes:Vector<Class<Component>> = new Vector(C.MAX_COMPONENTS); // ALL COMPONENTS IDS
+    var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
+    var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
     public var templatesByName:Map<String, Template> = new Map();
@@ -553,8 +553,8 @@ class NetEntityManager extends Net
             allTypes[componentId] = componentType;
         }
 
-        trace("Components total : " + numComponents + "/" + C.MAX_COMPONENTS);
-        trace("Net components total : " + numNetComponents + "/" + C.MAX_COMPONENTS);
+        trace("Components total : " + numComponents + "/" + MAX_COMPONENTS);
+        trace("Net components total : " + numNetComponents + "/" + MAX_COMPONENTS);
 
         // GET ENTITY FACTORY (MACRO) YAML
         // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
@@ -735,7 +735,7 @@ class NetEntityManager extends Net
         var templateCode = templatesById[entity.templateId].code;
         var deltaCode = entity.code ^ templateCode;
 
-        for(componentId in 0...C.MAX_COMPONENTS)
+        for(componentId in 0...MAX_COMPONENTS)
         {
             // CHECK IF COMPONENT REMOVED FROM TEMPLATE
             var deltaBit = deltaCode & (1 << componentId);
