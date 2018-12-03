@@ -504,7 +504,9 @@ class NetEntityManager extends Net
         // RESOLVE COMPONENT TYPES FROM STRING (MACRO)
         var serializables = podstream.SerializerMacro.getSerialized();
 
-        // ONLY RELATED TO '''NETWORK''' SERIALIZABLE TYPES
+        // COMPONENTS AND NET SERIALIZABLE COMPONENTS
+        var numComponents = 0;
+        var numNetComponents = 0;
         for(serializable in serializables)
         {
             if(serializable == null) continue; // Shouldn't be in the array in the first place !??
@@ -512,15 +514,20 @@ class NetEntityManager extends Net
 
             // NETWORKED COMPONENTS
             var componentNetId = (untyped componentType).__sid;
-            if(componentNetId != -1) 
+            if(componentNetId != -1)
+            {
+                numNetComponents++;
                 serializableTypes[componentNetId] = componentType;
+            }
 
             // ALL COMPONENTS
+            numComponents++;
             var componentId = (untyped componentType).__id;
             allTypes[componentId] = componentType;
         }
 
-        trace("componentTypes " + serializableTypes);
+        trace("Components total : " + numComponents + "/32");
+        trace("Net components total : " + numNetComponents + "/32");
 
         // GET ENTITY FACTORY (MACRO) YAML
         // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
