@@ -4,6 +4,7 @@ import haxe.ds.IntMap;
 import haxe.ds.Vector;
 import haxe.macro.Expr;
 import haxe.macro.Context;
+import haxe.Int64;
 
 import anette.*;
 import anette.Protocol;
@@ -73,14 +74,39 @@ interface IMessage
 }
 
 
+class BitSets
+{
+    inline public static function value(index:Int):Int64
+        return Int64.shl(Int64.ofInt(1), index);
+
+    inline public static function remove(bits:Int64, mask:Int):Int64
+        return bits & ~value(mask);
+    
+    inline public static function add(bits:Int64, mask:Int):Int64
+        return bits | value(mask);
+    
+    inline public static function contains(bits :Int64, mask :Int) :Bool
+        return bits & value(mask) != 0;
+
+    inline public static function containsBitSet(bits :Int64, mask :Int64) :Bool
+        return (bits & mask) == bits;
+}
+
+
+@:enum abstract C(Int) to Int
+{
+    var MAX_COMPONENTS = 64;
+}
+
+
 class Entity
 {
     public var id:Int;
     static var ids:Int = 0;
-    public var code:Int = 0;
-    public var components:Vector<Component> = new Vector(32);
-    public var remComponents:Vector<Bool> = new Vector(32);
-    public var registeredSetsCode:Int = 0;
+    public var code:Int64 = 0;
+    public var components:Vector<Component> = new Vector(C.MAX_COMPONENTS);
+    public var remComponents:Vector<Bool> = new Vector(C.MAX_COMPONENTS);
+    public var registeredSetsCode:Int64 = 0;
 
     // NET
     public var templateId:Int;
@@ -91,7 +117,7 @@ class Entity
     public function new()
     {
         this.id = ids++;
-        for(i in 0...32) remComponents[i] = false; // Neko, hehe :|
+        for(i in 0...64) remComponents[i] = false; // Neko, hehe :|
     }
 
     public function get<T:Component>(componentType:Class<T>):T
@@ -137,33 +163,11 @@ class System
 }
 
 
-class BitSets
-{
-    // inline public static function remove(bits:Int64, mask:Int):Int64
-    inline public static function value(index:Int) return 1 << index;
-
-    inline public static function remove(bits:Int, mask:Int):Int
-        return bits & ~value(mask);
-    
-    // inline public static function add(bits:Int64, mask:Int):Int64
-    inline public static function add(bits:Int, mask:Int):Int
-        return bits | value(mask);
-    
-    // inline public static function contains (bits :Int64, mask :Int) :Bool
-    inline public static function contains(bits :Int, mask :Int) :Bool
-        return bits & value(mask) != 0;
-
-    inline public static function containsBitSet(bits :Int, mask :Int) :Bool
-        return (bits & mask) == bits;
-}
-
-
-
 class EntitySet
 {
     public var _id:Int;
     static var ids:Int = 0;
-    public var code:Int = 0;
+    public var code:Int64 = 0;
     public var em:EntityManager;
     public var entities:ListSet<Entity> = new ListSet();
 
@@ -220,7 +224,7 @@ class Template
     public var id:Int;
     public var name:String;
     public var func:Void->Entity;
-    public var code:Int;
+    public var code:Int64;
 
     public function new()
     {
@@ -287,7 +291,7 @@ class EntityManager
         {
             if(entitySet.code.containsBitSet(entity.code))
             {
-                var idCode = 0.add(entitySet._id);
+                var idCode = Int64.ofInt(0).add(entitySet._id);
 
                 // SKIP IF addComponent is called from that very entitySet...
                 if(idCode.containsBitSet(entity.registeredSetsCode)) continue;
@@ -314,12 +318,12 @@ class EntityManager
     inline function _removeComponent(entity:Entity, componentId:Int)
     {
         entity.code = entity.code.remove(componentId);
-        
+
         for(entitySet in entitySets)
         {
             if(!entitySet.code.containsBitSet(entity.code))
             {
-                var idCode = 0.add(entitySet._id);
+                var idCode = Int64.ofInt(0).add(entitySet._id);
                 if(!idCode.containsBitSet(entity.registeredSetsCode)) continue;
 
                 entitySet._removes.set(entity);
@@ -399,13 +403,11 @@ class EntityManager
 
     public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
-        for(i in 0...32)
+        for(componentId in 0...40)
         {
-            // if( (entity.registeredSetsCode & 1 << i) != 0)
-            if(entity.registeredSetsCode.contains(i))
+            if(entity.registeredSetsCode.contains(componentId))
             {
-                var tmpEntitySet = entitySets.get(i);
-                // if( (tmpEntitySet.code & (1 << component._id)) != 0 )
+                var tmpEntitySet = entitySets.get(componentId);
                 if(tmpEntitySet.code.contains(component._id))
                 {
                     if(tmpEntitySet != null && tmpEntitySet == entitySet) continue;
@@ -506,8 +508,8 @@ class NetEntityManager extends Net
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
-    var serializableTypes:Vector<Class<Component>> = new Vector(32); // SERIALIZED SPECIFIC IDS
-    var allTypes:Vector<Class<Component>> = new Vector(32); // ALL COMPONENTS IDS
+    var serializableTypes:Vector<Class<Component>> = new Vector(C.MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
+    var allTypes:Vector<Class<Component>> = new Vector(C.MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
     public var templatesByName:Map<String, Template> = new Map();
@@ -551,8 +553,8 @@ class NetEntityManager extends Net
             allTypes[componentId] = componentType;
         }
 
-        trace("Components total : " + numComponents + "/32");
-        trace("Net components total : " + numNetComponents + "/32");
+        trace("Components total : " + numComponents + "/" + C.MAX_COMPONENTS);
+        trace("Net components total : " + numNetComponents + "/" + C.MAX_COMPONENTS);
 
         // GET ENTITY FACTORY (MACRO) YAML
         // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
@@ -733,13 +735,13 @@ class NetEntityManager extends Net
         var templateCode = templatesById[entity.templateId].code;
         var deltaCode = entity.code ^ templateCode;
 
-        for(pos in 0...32)
+        for(componentId in 0...C.MAX_COMPONENTS)
         {
             // CHECK IF COMPONENT REMOVED FROM TEMPLATE
-            var deltaBit = deltaCode & (1 << pos);
+            var deltaBit = deltaCode & (1 << componentId);
             if(deltaBit != 0)  // CHANGE
             {
-                var addBit = entity.code & (1 << pos);
+                var addBit = entity.code & (1 << componentId);
                 if(addBit != 0)  // ADD
                 {
                     // // Reflect until i find something cleaner (with podstream)
@@ -750,18 +752,18 @@ class NetEntityManager extends Net
                 else
                 {
                     // if(entity.components[pos]._sid == -1) continue;
-                    var sid = (cast allTypes[pos]).__sid;
+                    var sid = (cast allTypes[componentId]).__sid;
                     if(sid == -1) continue;
-                    var compName = Type.getClassName(allTypes[pos]);
+                    var compName = Type.getClassName(allTypes[componentId]);
                     sendRemoveComponent(entity.id, sid, connection);
                 }
             }
 
             // SEND ENTITY COMPONENT VALUES
-            if( (entity.code & 1 << pos) != 0)
+            if(entity.code.contains(componentId))
             {
-                if(entity.components[pos]._sid == -1) continue;
-                sendAddComponent(entity.id, entity.components[pos], connection);
+                if(entity.components[componentId]._sid == -1) continue;
+                sendAddComponent(entity.id, entity.components[componentId], connection);
             }
         }
     }

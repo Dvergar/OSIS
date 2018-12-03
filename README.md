@@ -22,4 +22,4 @@ I'm not comfortable in advertising SISO until i spend enough time using the libr
 **Limitations**
 
 * Based on my network library [Anette](https://github.com/Dvergar/Anette) which is actually broken on the server websocket/JS target, SISO is inheriting the same issue
-* 32 components max, 32 systems max (will patch when reaching the limit myself :))
+* 64 components max, 64 entity sets max
