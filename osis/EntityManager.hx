@@ -91,7 +91,6 @@ class Entity
     {
         this.id = ids++;
         for(i in 0...32) remComponents[i] = false; // Neko, hehe :|
-        // trace("ENTITY ID " + id); // DEBUG
     }
 
     public function get<T:Component>(componentType:Class<T>):T
@@ -158,6 +157,7 @@ class EntitySet
         this._id = ids++;
         this.em = em;
 
+        // SET ENTITYSET SIGNATURE VIA BITS
         for(componentType in componentTypeList)
         {
             // trace("Systemcode " + code); // DEBUG
@@ -170,6 +170,8 @@ class EntitySet
 
     public function applyChanges()
     {
+        for(add in _adds) entities.set(add);
+
         adds = _adds;
         changes = _changes;
         removes = _removes;
@@ -177,6 +179,7 @@ class EntitySet
         _adds = new ListSet();
         _changes = new ListSet();
         _removes = new ListSet();
+
     }
 
     public function markChanged<T:Component>(entity:Entity, component:T)
@@ -259,14 +262,11 @@ class EntityManager
         {
             if( (entitySet.code & entity.code) == entitySet.code )
             {
-                // IF addComponent is called from that very entitySet...
                 var idCode = 0 | (1 << entitySet._id);
-                if( (entity.registeredSetsCode & idCode) == idCode)
-                {
-                    continue;
-                }
 
-                entitySet.entities.set(entity);
+                // SKIP IF addComponent is called from that very entitySet...
+                if( (entity.registeredSetsCode & idCode) == idCode) continue;
+
                 entitySet._adds.set(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
             }
@@ -476,8 +476,7 @@ class EventContainer
 
 class NetEntityManager extends Net
 {
-    var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
-
+    // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
     var em:EntityManager;
     public static var instance:NetEntityManager; // MEH
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS

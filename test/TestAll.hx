@@ -15,7 +15,7 @@ class Test
             throw "expected false but was true";
     }
 
-    public static function assertEquals<T>(expected:T, actual:T):Void
+    public static function assertEquals<T>(actual:T, expected:T):Void
     {
         if (actual != expected)
             throw "expected '" + expected + "' but was '" + actual + "'";
@@ -58,6 +58,9 @@ class TestAll
         //// CHECKING IF ENTITY HAS BEEN ADDED
         Test.assertEquals(entitySet._adds.length, 1);
         Test.assertEquals(entitySet.adds.length, 0);
+
+        //// CHECKING ENTITY NOT YET ADDED TO ENTITIES
+        Test.assertEquals(entitySet.entities.length, 0);
 
         //// CHECKING APPLYCHANGES ON ADDED
         entitySet.applyChanges();
