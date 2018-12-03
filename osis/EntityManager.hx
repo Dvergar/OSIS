@@ -170,7 +170,8 @@ class EntitySet
 
     public function applyChanges()
     {
-        for(add in _adds) entities.set(add);
+        for(e in _adds) entities.set(e);
+        for(e in _removes) entities.remove(e);
 
         adds = _adds;
         changes = _changes;
@@ -298,7 +299,6 @@ class EntityManager
                     continue;
 
                 entitySet._removes.set(entity);
-                entitySet.entities.remove(entity);
                 entitySet._changes.remove(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode & ~(1 << entitySet._id);
             }

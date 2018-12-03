@@ -67,10 +67,16 @@ class TestAll
         Test.assertEquals(entitySet.adds.length, 1);
         Test.assertEquals(entitySet._adds.length, 0);
 
+        //// CHECKING IF ENTITIES++
+        Test.assertEquals(entitySet.entities.length, 1);
+
         //// CHECKING APPLYCHANGES ON REMOVE
         em.removeComponent(entity, CVector);
         entitySet.applyChanges();
         Test.assertEquals(entitySet.removes.length, 1);
+
+        //// CHECKING IF ENTITIES++
+        Test.assertEquals(entitySet.entities.length, 0);
     }
 
     static function main():Void
