@@ -12,6 +12,7 @@ import anette.Bytes;
 
 using EntityManager.ArrayEntityExtender;
 using EntityManager.BitSets;
+using EntityManager.ComponentTypeExtender;
 
 typedef Connection = anette.Connection;
 typedef ListSet<T> = Array<T>;
@@ -51,6 +52,17 @@ class EntityExtender
     {
         em.destroyEntity(entity);
     }
+}
+
+
+// NOT SUPER FOUND OF THIS
+class ComponentTypeExtender
+{
+    static public function get__id<T:Component>(componentType:Class<T>):Int
+        return (untyped componentType).__id;
+
+    static public function get__sid<T:Component>(componentType:Class<T>):Int
+        return (untyped componentType).__sid;
 }
 
 
@@ -122,7 +134,7 @@ class Entity
 
     public function get<T:Component>(componentType:Class<T>):T
     {
-        var comp:T = cast components[(untyped componentType).__id];
+        var comp:T = cast components[componentType.get__id()];
         if(comp == null)
             throw "Entity " + id + " doesn't have component " + componentType;
         return comp;
@@ -130,10 +142,11 @@ class Entity
 
     public function has<T:Component>(componentType:Class<T>):Bool
     {
-        var comp:T = cast components[(untyped componentType).__id];
+        // var comp:T = cast components[componentType.get__id()];
+        var comp:T = cast components[componentType.get__id()];
         if(comp == null) return false;
 
-        return !remComponents[(untyped componentType).__id];
+        return !remComponents[componentType.get__id()];
     }
 
     public function toString()
@@ -188,11 +201,11 @@ class EntitySet
         for(componentType in componentTypeList)
         {
             // trace("Systemcode " + code); // DEBUG
-            // trace((untyped componentType).__id); // DEBUG
+            // trace(componentType.get__id()); // DEBUG
             // trace("Adding component ID :"); // DEBUG
-            // trace((untyped componentType).__id); // DEBUG
-            // code = code | (1 << (untyped componentType).__id);
-            code = code.add((untyped componentType).__id);
+            // trace(componentType.get__id()); // DEBUG
+            // code = code | (1 << componentType.get__id());
+            code = code.add(componentType.get__id());
         }
     }
 
@@ -312,7 +325,7 @@ class EntityManager
 
     public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
-        _removeComponent(entity, (untyped componentType).__id);
+        _removeComponent(entity, componentType.get__id());
     }
 
     inline function _removeComponent(entity:Entity, componentId:Int)
@@ -540,7 +553,7 @@ class NetEntityManager extends Net
             var componentType:Class<Component> = cast Type.resolveClass(serializable);
 
             // NETWORKED COMPONENTS
-            var componentNetId = (untyped componentType).__sid;
+            var componentNetId = componentType.get__sid();
             if(componentNetId != -1)
             {
                 numNetComponents++;
@@ -549,7 +562,7 @@ class NetEntityManager extends Net
 
             // ALL COMPONENTS
             numComponents++;
-            var componentId = (untyped componentType).__id;
+            var componentId = componentType.get__id();
             allTypes[componentId] = componentType;
         }
 
@@ -711,7 +724,7 @@ class NetEntityManager extends Net
     public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
         for(connection in socket.connections)
-            sendRemoveComponent(entity.id, (untyped componentType).__sid, connection);
+            sendRemoveComponent(entity.id, componentType.get__sid(), connection);
         em.removeComponent(entity, componentType);
     }
 
