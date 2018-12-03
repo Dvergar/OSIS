@@ -231,21 +231,6 @@ class EntitySet
 }
 
 
-class Template
-{
-    public static var ids:Int = 0;
-    public var id:Int;
-    public var name:String;
-    public var func:Void->Entity;
-    public var code:Int64;
-
-    public function new()
-    {
-        this.id = Template.ids++;
-    }
-}
-
-
 typedef ComponentDestroyData = {entity:Entity, componentId:Int};
 
 #if !macro
@@ -417,17 +402,12 @@ class EntityManager
     public function markChanged<T:Component>(entity:Entity, component:T, ?filterEntitySet:EntitySet)
     {
         for(entitySet in entitySets)
-        {
             if(entity.registeredSetsCode.contains(entitySet._id))
-            {
-                // var tmpEntitySet = entitySets.get(componentId);
                 if(entitySet.code.contains(component._id))
                 {
                     if(entitySet != null && entitySet == filterEntitySet) continue;
                     entitySet._changes.set(entity);
                 }
-            }
-        }
     }
 
     // NET HELPERS
@@ -515,11 +495,38 @@ class EventContainer
 }
 
 
+@:enum abstract NETWORK_ORDER(Int) from Int to Int
+{
+    var CREATE_ENTITY = 0;
+    var CREATE_TEMPLATE_ENTITY = 1;
+    var ADD_COMPONENT = 2;
+    var UPDATE_COMPONENT = 3;
+    var REMOVE_COMPONENT = 4;
+    var DESTROY_ENTITY = 5;
+    var EVENT = 6;
+}
+
+
+class Template
+{
+    public static var ids:Int = 0;
+    public var id:Int;
+    public var name:String;
+    public var func:Void->Entity;
+    public var code:Int64;
+
+    public function new()
+    {
+        this.id = Template.ids++;
+    }
+}
+
+
 class NetEntityManager extends Net
 {
     // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
     var em:EntityManager;
-    public static var instance:NetEntityManager; // MEH
+    public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
     public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
     var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
@@ -527,14 +534,6 @@ class NetEntityManager extends Net
 
     public var templatesByName:Map<String, Template> = new Map();
     public var templatesById:Array<Template> = new Array();
-
-    static inline var CREATE_ENTITY = 0;
-    static inline var CREATE_TEMPLATE_ENTITY = 1;
-    static inline var ADD_COMPONENT = 2;
-    static inline var UPDATE_COMPONENT = 3;
-    static inline var REMOVE_COMPONENT = 4;
-    static inline var DESTROY_ENTITY = 5;
-    static inline var EVENT = 6;
 
     public function new(em:EntityManager)
     {
@@ -813,7 +812,7 @@ class NetEntityManager extends Net
 
     /// COMMON ///
 
-    public function registerTemplate(name:String, func:Void->Entity)
+    public function addTemplate(name:String, func:Void->Entity)
     {
         var template = new Template();
         template.name = name;
@@ -856,7 +855,7 @@ class NetEntityManager extends Net
         message.serialize(output);
     }
 
-    public function registerEvent<T:IMessage>(messageClass:Class<IMessage>,
+    public function addEvent<T:IMessage>(messageClass:Class<IMessage>,
                                               func:T->Connection->Void)
     {
         var event = new EventContainer();
@@ -875,7 +874,7 @@ class NetEntityManager extends Net
     {
         while(connection.input.mark - connection.input.position > 0)
         {
-            var msgtype = connection.input.readInt8();
+            var msgtype:NETWORK_ORDER = connection.input.readInt8();
 
             switch(msgtype)
             {

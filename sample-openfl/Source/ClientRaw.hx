@@ -130,8 +130,8 @@ class ClientRaw
     {
         var ec = new EntityCreator(em);
         net = em.connect("127.0.0.1", 32000);
-        net.registerEvent(MessageHello, onMessage);
-        net.registerEvent(PingPong, onPong);
+        net.addEvent(MessageHello, onMessage);
+        net.addEvent(PingPong, onPong);
         // em.addSystem(new DrawableSystem());
         em.addSystem(new DummySystem());
         // em.addSystem(new DebugSystem());

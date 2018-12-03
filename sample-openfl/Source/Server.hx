@@ -15,8 +15,8 @@ class Server
         net = em.listen("127.0.0.1", 32000);
         net.onConnection = onConnection;
         net.onDisconnection = onDisconnection;
-        net.registerEvent(MessageHello, onMessage);
-        net.registerEvent(PingPong, onPing);
+        net.addEvent(MessageHello, onMessage);
+        net.addEvent(PingPong, onPing);
         em.addSystem(new MovementSystem());
         em.addSystem(new DummySystem());
 

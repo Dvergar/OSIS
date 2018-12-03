@@ -99,7 +99,7 @@ class EntityCreator
     public function new(em:EntityManager)
     {
         this.em = em;
-        em.net.registerTemplate("player", createPlayer);
+        em.net.addTemplate("player", createPlayer);
     }
 
     public function createPlayer()
