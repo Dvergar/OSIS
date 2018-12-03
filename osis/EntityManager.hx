@@ -10,6 +10,7 @@ import anette.Protocol;
 import anette.Bytes;
 
 using EntityManager.ArrayEntityExtender;
+using EntityManager.BitSets;
 
 typedef Connection = anette.Connection;
 typedef ListSet<T> = Array<T>;
@@ -136,6 +137,28 @@ class System
 }
 
 
+class BitSets
+{
+    // inline public static function remove(bits:Int64, mask:Int):Int64
+    inline public static function value(index:Int) return 1 << index;
+
+    inline public static function remove(bits:Int, mask:Int):Int
+        return bits & ~value(mask);
+    
+    // inline public static function add(bits:Int64, mask:Int):Int64
+    inline public static function add(bits:Int, mask:Int):Int
+        return bits | value(mask);
+    
+    // inline public static function contains (bits :Int64, mask :Int) :Bool
+    inline public static function contains(bits :Int, mask :Int) :Bool
+        return bits & value(mask) != 0;
+
+    inline public static function containsBitSet(bits :Int, mask :Int) :Bool
+        return (bits & mask) == bits;
+}
+
+
+
 class EntitySet
 {
     public var _id:Int;
@@ -164,7 +187,8 @@ class EntitySet
             // trace((untyped componentType).__id); // DEBUG
             // trace("Adding component ID :"); // DEBUG
             // trace((untyped componentType).__id); // DEBUG
-            code = code | (1 << (untyped componentType).__id);
+            // code = code | (1 << (untyped componentType).__id);
+            code = code.add((untyped componentType).__id);
         }
     }
 
@@ -257,19 +281,19 @@ class EntityManager
     public function addComponent<T:Component>(entity:Entity, component:T):T
     {
         entity.components[component._id] = component;
-        entity.code = entity.code | (1 << component._id);
+        entity.code = entity.code.add(component._id);
 
         for(entitySet in entitySets)
         {
-            if( (entitySet.code & entity.code) == entitySet.code )
+            if(entitySet.code.containsBitSet(entity.code))
             {
-                var idCode = 0 | (1 << entitySet._id);
+                var idCode = 0.add(entitySet._id);
 
                 // SKIP IF addComponent is called from that very entitySet...
-                if( (entity.registeredSetsCode & idCode) == idCode) continue;
+                if(idCode.containsBitSet(entity.registeredSetsCode)) continue;
 
                 entitySet._adds.set(entity);
-                entity.registeredSetsCode = entity.registeredSetsCode | (1 << entitySet._id);
+                entity.registeredSetsCode = entity.registeredSetsCode.add(entitySet._id);
             }
         }
 
@@ -289,18 +313,18 @@ class EntityManager
 
     inline function _removeComponent(entity:Entity, componentId:Int)
     {
-        entity.code = entity.code & ~(1 << componentId);
+        entity.code = entity.code.remove(componentId);
+        
         for(entitySet in entitySets)
         {
-            if( (entitySet.code & entity.code) != entitySet.code)
+            if(!entitySet.code.containsBitSet(entity.code))
             {
-                var idCode = 0 | (1 << entitySet._id);
-                if( (entity.registeredSetsCode & idCode) != idCode)
-                    continue;
+                var idCode = 0.add(entitySet._id);
+                if(!idCode.containsBitSet(entity.registeredSetsCode)) continue;
 
                 entitySet._removes.set(entity);
                 entitySet._changes.remove(entity);
-                entity.registeredSetsCode = entity.registeredSetsCode & ~(1 << entitySet._id);
+                entity.registeredSetsCode = entity.registeredSetsCode.remove(entitySet._id);
             }
         }
         
@@ -377,10 +401,12 @@ class EntityManager
     {
         for(i in 0...32)
         {
-            if( (entity.registeredSetsCode & 1 << i) != 0)
+            // if( (entity.registeredSetsCode & 1 << i) != 0)
+            if(entity.registeredSetsCode.contains(i))
             {
                 var tmpEntitySet = entitySets.get(i);
-                if( (tmpEntitySet.code & (1 << component._id)) != 0 )
+                // if( (tmpEntitySet.code & (1 << component._id)) != 0 )
+                if(tmpEntitySet.code.contains(component._id))
                 {
                     if(tmpEntitySet != null && tmpEntitySet == entitySet) continue;
                     tmpEntitySet._changes.set(entity);
