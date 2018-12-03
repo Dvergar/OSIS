@@ -13,6 +13,7 @@ import anette.Bytes;
 using EntityManager.ArrayEntityExtender;
 using EntityManager.BitSets;
 using EntityManager.ComponentTypeExtender;
+using EntityManager.EntityExtender;
 
 typedef Connection = anette.Connection;
 typedef ListSet<T> = Array<T>;
@@ -243,6 +244,8 @@ class EntityManager
     var entitySets:Array<EntitySet> = new Array();
     var componentsToDestroy:Array<ComponentDestroyData> = new Array();
 
+    public var templatesByName:Map<String, Template> = new Map();
+    public var templatesById:Array<Template> = new Array();
     public var net:NetEntityManager;
     // var self:EntityManager;  // YAML
 
@@ -260,9 +263,42 @@ class EntityManager
         return entitySet;
     }
 
-    public function createEntity():Entity
+    // public function createEntity():Entity
+    // {
+    //     return new Entity();
+    // }
+
+    public function createEntity(?name:String):Entity
     {
+        // YAML
+        // var templateId = templatesByString.get(name);
+        // var templateId = entityFactory.indexOf(name);
+        // trace("wat " + name);
+        // if(templateId == -1) throw "The entity '${name}' doesn't exists";
+
+        // TEMPLATE ENTITY
+        if(name != null)
+        {
+            // BUILD IT
+            var template = templatesByName.get(name);
+            return template.func();
+        }
+
         return new Entity();
+    }
+
+    public function addTemplate(name:String, func:Void->Entity)
+    {
+        var template = new Template();
+        template.name = name;
+        template.func = func;
+        templatesByName.set(name, template);
+        templatesById[template.id] = template;
+
+        // GET TEMPLATE CODE (used for network deltas)
+        var entity:Entity = func();
+        template.code = entity.code;
+        entity.destroy();
     }
 
     public function destroyEntity(entity:Entity)
@@ -532,9 +568,6 @@ class NetEntityManager extends Net
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
 
-    public var templatesByName:Map<String, Template> = new Map();
-    public var templatesById:Array<Template> = new Array();
-
     public function new(em:EntityManager)
     {
         instance = this;
@@ -611,25 +644,12 @@ class NetEntityManager extends Net
     // }
 
     public function createEntity(name:String):Entity
-    {
-        // YAML
-        // var templateId = templatesByString.get(name);
-        // var templateId = entityFactory.indexOf(name);
-        // trace("wat " + name);
-        // if(templateId == -1) throw "The entity '${name}' doesn't exists";
-
-        // BUILD IT
-        var template = templatesByName.get(name);
-        var entity:Entity = template.func();
-
-        // SEND IT
-        return sendFactoryEntity(name, entity);
-    }
+        return sendFactoryEntity(name, em.createEntity(name));
 
     public function sendFactoryEntity(name:String, entity:Entity):Entity
     {
         // trace("sendEntity " + name); // DEBUG
-        var template = templatesByName.get(name);
+        var template = em.templatesByName.get(name);
         if(template == null) throw 'Template $name doesn\'t exists';
         entity.templateId = template.id;
 
@@ -744,7 +764,7 @@ class NetEntityManager extends Net
 
     function sendDeltas(connection:Connection, entity:Entity)
     {
-        var templateCode = templatesById[entity.templateId].code;
+        var templateCode = em.templatesById[entity.templateId].code;
         var deltaCode = entity.code ^ templateCode;
 
         for(componentId in 0...MAX_COMPONENTS)
@@ -811,20 +831,6 @@ class NetEntityManager extends Net
     #end
 
     /// COMMON ///
-
-    public function addTemplate(name:String, func:Void->Entity)
-    {
-        var template = new Template();
-        template.name = name;
-        template.func = func;
-        templatesByName.set(name, template);
-        templatesById[template.id] = template;
-
-        // GET TEMPLATE CODE (used for network deltas)
-        var entity = func();
-        template.code = entity.code;
-        em.destroyEntity(entity);
-    }
 
     function receiveEvent(messageTypeId:Int, connection:Connection)
     {
@@ -941,7 +947,7 @@ class NetEntityManager extends Net
                     var templateId = connection.input.readInt8();
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
-                    var entity = templatesById[templateId].func();
+                    var entity = em.templatesById[templateId].func();
                     entity.netId = entityId;
                     entities.set(entityId, entity);
             }
