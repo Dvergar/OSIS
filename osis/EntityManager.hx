@@ -753,8 +753,7 @@ class NetEntityManager extends Net
     public function sendWorldStateTo(connection:Connection)
     {
         var connectionEntity = entitiesByConnection.get(connection);
-        if(connectionEntity == null)
-            throw "Connection has to have a bound entity";
+        if(connectionEntity == null) throw "Connection has to have a bound entity";
 
         for(entity in entities)
         {
@@ -802,8 +801,7 @@ class NetEntityManager extends Net
 
     public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
-        if(component._sid == -1)
-            throw 'Component $component is not serializable';
+        if(component._sid == -1) throw 'Component $component is not serializable';
 
         em.markChanged(entity, component, entitySet);
 
