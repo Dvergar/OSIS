@@ -97,6 +97,9 @@ class BitSets
     
     inline public static function add(bits:Int64, mask:Int):Int64
         return bits | value(mask);
+
+    inline public static function xor(bits:Int64, mask:Int64):Int64
+        return bits ^ mask;
     
     inline public static function contains(bits :Int64, mask :Int) :Bool
         return bits & value(mask) != 0;
@@ -765,16 +768,14 @@ class NetEntityManager extends Net
     function sendDeltas(connection:Connection, entity:Entity)
     {
         var templateCode = em.templatesById[entity.templateId].code;
-        var deltaCode = entity.code ^ templateCode;
+        var deltaCode = entity.code.xor(templateCode);
 
         for(componentId in 0...MAX_COMPONENTS)
         {
             // CHECK IF COMPONENT REMOVED FROM TEMPLATE
-            var deltaBit = deltaCode & (1 << componentId);
-            if(deltaBit != 0)  // CHANGE
+            if(deltaCode.contains(componentId))  // CHANGE
             {
-                var addBit = entity.code & (1 << componentId);
-                if(addBit != 0)  // ADD
+                if(entity.code.contains(componentId))  // ADD
                 {
                     // // Reflect until i find something cleaner (with podstream)
                     // if(Reflect.field(entity.components[pos], "_sid") == null)
@@ -783,9 +784,8 @@ class NetEntityManager extends Net
                 }
                 else
                 {
-                    // if(entity.components[pos]._sid == -1) continue;
                     var sid = (cast allTypes[componentId]).__sid;
-                    if(sid == -1) continue;
+                    if(sid == -1) continue; // NOT NETWORKED
                     var compName = Type.getClassName(allTypes[componentId]);
                     sendRemoveComponent(entity.id, sid, connection);
                 }
@@ -849,6 +849,7 @@ class NetEntityManager extends Net
             for(connection in socket.connections)
                 _sendEvent(connection.output, message);
         #end
+        
         #if client
             _sendEvent(socket.connection.output, message);
         #end
