@@ -146,7 +146,6 @@ class Entity
 
     public function has<T:Component>(componentType:Class<T>):Bool
     {
-        // var comp:T = cast components[componentType.get__id()];
         var comp:T = cast components[componentType.get__id()];
         if(comp == null) return false;
 
