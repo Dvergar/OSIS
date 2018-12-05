@@ -1,0 +1,1 @@
+haxe server_cpp.hxml && .\cpp_build\Server-debug.exe

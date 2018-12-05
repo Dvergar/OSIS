@@ -265,11 +265,6 @@ class EntityManager
         return entitySet;
     }
 
-    // public function createEntity():Entity
-    // {
-    //     return new Entity();
-    // }
-
     public function createEntity(?name:String):Entity
     {
         // YAML

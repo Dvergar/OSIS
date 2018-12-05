@@ -197,5 +197,5 @@ class Client
         });
     }
 
-    public static function main() {}
+    public static function main() {new Client();}
 }

@@ -1,0 +1,10 @@
+-main Server.hx
+-cpp "cpp_build"
+
+-lib osis
+-lib yaml
+-lib podstream
+-lib anette
+-D server
+# -D yamlpath=./
+-debug
