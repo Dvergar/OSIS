@@ -234,6 +234,56 @@ class EntitySet
 }
 
 
+
+class Template
+{
+    public static var ids:Int = 0;
+    public var id:Int;
+    public var name:String;
+    public var func:Void->Entity;
+    public var code:Int64 = 0;
+
+    public function new(name:String, func:Void->Entity)
+    {
+        this.id = Template.ids++;
+        this.name = name;
+        this.func = func;
+    }
+}
+
+
+class TemplateStore
+{
+    public var byName:Map<String, Template> = new Map();
+    public var byId:Array<Template> = new Array();
+
+    public function new() {}
+
+    public function add(name:String, func:Void->Entity)
+    {
+        var template = new Template(name, func);
+        byName.set(name, template);
+        byId[template.id] = template;
+
+        // GET TEMPLATE CODE (used for network deltas)
+        var entity:Entity = func();
+        template.code = entity.code;
+        entity.destroy();
+    }
+
+    public function getByName(name:String)
+    {
+        var template = byName.get(name);
+        if(template == null) throw 'Template $name doesn\'t exists';
+        return template;
+    }
+
+    public function getById(id:Int)
+        return byId[id];
+}
+
+
+
 typedef ComponentDestroyData = {entity:Entity, componentId:Int};
 
 #if !macro
@@ -246,8 +296,7 @@ class EntityManager
     var entitySets:Array<EntitySet> = new Array();
     var componentsToDestroy:Array<ComponentDestroyData> = new Array();
 
-    public var templatesByName:Map<String, Template> = new Map();
-    public var templatesById:Array<Template> = new Array();
+    public var templateStore:TemplateStore = new TemplateStore();
     public var net:NetEntityManager;
     // var self:EntityManager;  // YAML
 
@@ -274,29 +323,13 @@ class EntityManager
         // if(templateId == -1) throw "The entity '${name}' doesn't exists";
 
         // TEMPLATE ENTITY
-        if(name != null)
-        {
-            // BUILD IT
-            var template = templatesByName.get(name);
-            return template.func();
-        }
+        if(name != null) return templateStore.getByName(name).func();
 
         return new Entity();
     }
 
     public function addTemplate(name:String, func:Void->Entity)
-    {
-        var template = new Template();
-        template.name = name;
-        template.func = func;
-        templatesByName.set(name, template);
-        templatesById[template.id] = template;
-
-        // GET TEMPLATE CODE (used for network deltas)
-        var entity:Entity = func();
-        template.code = entity.code;
-        entity.destroy();
-    }
+        templateStore.add(name, func);
 
     public function destroyEntity(entity:Entity)
     {
@@ -438,7 +471,7 @@ class EntityManager
             if(entity.registeredSetsCode.contains(entitySet._id))
                 if(entitySet.code.contains(component._id))
                 {
-                    if(entitySet != null && entitySet == filterEntitySet) continue;
+                    if(entitySet == filterEntitySet) continue;
                     entitySet._changes.set(entity);
                 }
     }
@@ -540,21 +573,6 @@ class EventContainer
 }
 
 
-class Template
-{
-    public static var ids:Int = 0;
-    public var id:Int;
-    public var name:String;
-    public var func:Void->Entity;
-    public var code:Int64;
-
-    public function new()
-    {
-        this.id = Template.ids++;
-    }
-}
-
-
 class NetEntityManager extends Net
 {
     // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
@@ -605,13 +623,13 @@ class NetEntityManager extends Net
     //////////////// SERVER //////////////
     #if server
     public var entitiesByConnection:Map<Connection, Entity> = new Map();
-    public var connections:Map<Entity, Connection> = new Map();  // TEMP
+    public var connections:Map<Entity, Connection> = new Map();
 
     // USED WHEN DISCONNECTED FOR ENTITY DESTROY
     public function bindEntity(connection:Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
-        connections.set(entity, connection);  // TEMP
+        connections.set(entity, connection);
     }
 
     public function getBoundEntity(connection:Connection)
@@ -646,9 +664,7 @@ class NetEntityManager extends Net
     public function sendFactoryEntity(name:String, entity:Entity):Entity
     {
         // trace("sendEntity " + name); // DEBUG
-        var template = em.templatesByName.get(name);
-        if(template == null) throw 'Template $name doesn\'t exists';
-        entity.templateId = template.id;
+        entity.templateId = em.templateStore.getByName(name).id;
 
         // SEND
         for(connection in socket.connections)
@@ -682,14 +698,14 @@ class NetEntityManager extends Net
     //     return entity;
     // }
 
-    function sendCreate(output:haxe.io.BytesOutput, entity:Entity)
+    function sendCreate(output:haxe.io.BytesOutput, entity:Entity):Void
     {
         output.writeInt8(CREATE_TEMPLATE_ENTITY);
         output.writeInt16(entity.id);
         output.writeInt8(entity.templateId);
     }
 
-    public function destroyEntity(entity:Entity)
+    public function destroyEntity(entity:Entity):Void
     {
         for(connection in socket.connections)
         {
@@ -760,7 +776,7 @@ class NetEntityManager extends Net
 
     function sendDeltas(connection:Connection, entity:Entity)
     {
-        var templateCode = em.templatesById[entity.templateId].code;
+        var templateCode = em.templateStore.getById(entity.templateId).code;
         var deltaCode = entity.code.xor(templateCode);
 
         for(componentId in 0...MAX_COMPONENTS)
@@ -940,7 +956,7 @@ class NetEntityManager extends Net
                     var templateId = connection.input.readInt8();
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
-                    var entity = em.templatesById[templateId].func();
+                    var entity = em.templateStore.getById(templateId).func();
                     entity.netId = entityId;
                     entities.set(entityId, entity);
             }
