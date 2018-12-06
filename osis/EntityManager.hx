@@ -77,7 +77,7 @@ interface Component
 }
 
 
-@:autoBuild(podstream.SerializerMacro.build())
+@:autoBuild(osis.CustomNetworkTypes.build())
 interface IMessage
 {
     public var _sid:Int;
@@ -133,7 +133,7 @@ class Entity
     public function new()
     {
         this.id = ids++;
-        for(i in 0...MAX_COMPONENTS) remComponents[i] = false; // Neko, hehe :|
+        for(i in 0...MAX_COMPONENTS) remComponents[i] = false;
     }
 
     public function get<T:Component>(componentType:Class<T>):T
@@ -207,7 +207,6 @@ class EntitySet
             // trace(componentType.get__id()); // DEBUG
             // trace("Adding component ID :"); // DEBUG
             // trace(componentType.get__id()); // DEBUG
-            // code = code | (1 << componentType.get__id());
             code = code.add(componentType.get__id());
         }
     }
@@ -661,7 +660,7 @@ class NetEntityManager extends Net
     public function createEntity(name:String):Entity
         return sendFactoryEntity(name, em.createEntity(name));
 
-    public function sendFactoryEntity(name:String, entity:Entity):Entity
+    function sendFactoryEntity(name:String, entity:Entity):Entity
     {
         // trace("sendEntity " + name); // DEBUG
         entity.templateId = em.templateStore.getByName(name).id;
@@ -795,7 +794,6 @@ class NetEntityManager extends Net
                 {
                     var sid = (cast allTypes[componentId]).__sid;
                     if(sid == -1) continue; // NOT NETWORKED
-                    var compName = Type.getClassName(allTypes[componentId]);
                     sendRemoveComponent(entity.id, sid, connection);
                 }
             }
