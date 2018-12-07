@@ -600,11 +600,11 @@ class NetEntityManager extends Net
 {
     // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
     var em:EntityManager;
-    public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
-    public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
     var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
+    public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
+    public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
 
     public function new(em:EntityManager)
     {
@@ -736,7 +736,7 @@ class NetEntityManager extends Net
             connection.output.writeInt16(entity.id);
         }
 
-        em.destroyEntity(entity);
+        entity.destroy();
 
         // CLEANUP
         var connection = connections.get(entity);
@@ -760,7 +760,7 @@ class NetEntityManager extends Net
         for(connection in socket.connections)
             sendAddComponent(entity.id, component, connection);
 
-        em.addComponent(entity, component);
+        entity.add(component);
         return component;
     }
 
@@ -780,7 +780,7 @@ class NetEntityManager extends Net
     {
         for(connection in socket.connections)
             sendRemoveComponent(entity.id, componentType.get__sid(), connection);
-        em.removeComponent(entity, componentType);
+        entity.remove(componentType);
     }
 
     public function sendWorldStateTo(connection:Connection)
@@ -924,7 +924,7 @@ class NetEntityManager extends Net
                     trace("DESTROY_ENTITY " + entityId);
                     var entity = entities.get(entityId);
                     entities.remove(entityId);
-                    em.destroyEntity(entity);
+                    entity.destroy();
 
                 case ADD_COMPONENT:
                     var entityId = connection.input.readInt16();
@@ -934,7 +934,7 @@ class NetEntityManager extends Net
                     var componentType:Class<Component> = cast serializableTypes[componentTypeId];
                     var component:Component = Type.createInstance(componentType, []);
                     component.unserialize(connection.input);
-                    em.addComponent(entity, component);
+                    entity.add(component);
 
                 case REMOVE_COMPONENT:
                     var entityId = connection.input.readInt16();
