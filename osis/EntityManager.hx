@@ -19,6 +19,33 @@ typedef Connection = anette.Connection;
 typedef ListSet<T> = Array<T>;
 
 
+class Entities
+{
+    var store = new Map<Int, Entity>();
+    public var reverse = new Map<Entity, Int>();
+    
+    public function new() {}
+    
+    public function set(entityId:Int, entity:Entity)
+    {
+        store.set(entityId, entity);
+        reverse.set(entity, entityId);
+    }
+    
+    public function get(entityId:Int)
+        return store.get(entityId);
+    
+    public function remove(entityId:Int)
+    {
+        reverse.remove(store.get(entityId));
+        store.remove(entityId);
+    }
+    
+    public function iterator()
+        return store.iterator();
+}
+
+
 class ArrayEntityExtender
 {
     static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
@@ -126,9 +153,6 @@ class Entity
 
     // NET
     public var templateId:Int;
-    #if client
-    public var netId:Int;
-    #end
 
     public function new()
     {
@@ -577,7 +601,7 @@ class NetEntityManager extends Net
     // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
     var em:EntityManager;
     public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
-    public var entities:IntMap<Entity> = new IntMap(); // MAPS SERVER>CLIENT IDS
+    public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
     var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
@@ -880,8 +904,6 @@ class NetEntityManager extends Net
 
     //////////////// CLIENT //////////////
     #if client
-    public function getEntity(entityId:Int):Entity
-        return entities.get(entityId);
 
     override function onData(connection:Connection)
     {
@@ -895,7 +917,6 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     trace("CREATE_ENTITY " + entityId);
                     var entity = em.createEntity();
-                    entity.netId = entityId;
                     entities.set(entityId, entity);
 
                 case DESTROY_ENTITY:
@@ -955,7 +976,6 @@ class NetEntityManager extends Net
                     // YAML
                     // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
                     var entity = em.templateStore.getById(templateId).func();
-                    entity.netId = entityId;
                     entities.set(entityId, entity);
             }
         }

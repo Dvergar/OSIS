@@ -14,7 +14,7 @@ class CustomNetworkTypes
             name:"Entity",
             serialize: function(varNameOut:String) {
                 var a = [];
-                a.push( macro var enId:Int = $i{varNameOut}.id );
+                a.push( macro var enId:Int = NetEntityManager.instance.entities.reverse.get($i{varNameOut}) );
                 a.push( macro bo.writeInt32(enId) );
                 return a;
             },
