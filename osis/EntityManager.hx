@@ -742,7 +742,6 @@ class NetEntityManager extends Net
         var connection = connections.get(entity);
         entitiesByConnection.remove(connection);
         connections.remove(entity);  // TEMP
-
     }
 
     inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection):T
