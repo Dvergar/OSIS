@@ -153,7 +153,7 @@ interface Component
 
     usage :
     ```
-    class MessageInput implements IMessage
+    class MessageInput implements Message
     {
         @Short public var x:Int;
         @Short public var y:Int;
@@ -172,7 +172,7 @@ interface Component
     More infos on (https://github.com/Dvergar/PODStream)
 **/
 #if !macro @:autoBuild(osis.CustomNetworkTypes.build()) #end
-interface IMessage
+interface Message
 {
     public var _sid:Int;
     public var _id:Int;
@@ -733,8 +733,8 @@ class Net
 @:dox(hide)
 class EventContainer
 {
-    public var message:IMessage;
-    public var func:IMessage->Connection->Void;
+    public var message:Message;
+    public var func:Message->Connection->Void;
 
     public function new() {}
 }
@@ -1017,7 +1017,7 @@ class NetEntityManager extends Net
         eventContainer.func(eventContainer.message, connection);
     }
 
-    public function sendEvent(message:IMessage, ?connection:Connection)
+    public function sendEvent(message:Message, ?connection:Connection)
     {
         #if server
         if(connection != null)
@@ -1032,14 +1032,14 @@ class NetEntityManager extends Net
         #end
     }
 
-    inline function _sendEvent(output:haxe.io.BytesOutput, message:IMessage)
+    inline function _sendEvent(output:haxe.io.BytesOutput, message:Message)
     {
         output.writeInt8(EVENT);
         output.writeInt8(message._sid);
         message.serialize(output);
     }
 
-    public function addEvent<T:IMessage>(messageClass:Class<IMessage>,
+    public function addEvent<T:Message>(messageClass:Class<Message>,
                                               func:T->Connection->Void)
     {
         var event = new EventContainer();
@@ -1126,11 +1126,12 @@ class NetEntityManager extends Net
         }
     }
 
-    // public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
-    // {
-    //     // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
-    //     // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
-    // }
+    @:dox(hide)
+    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
+    {
+        // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
+        // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
+    }
     #end
 
     @:allow(osis.EntityManager)

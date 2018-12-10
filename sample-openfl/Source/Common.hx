@@ -11,7 +11,7 @@ import ClientRaw;
 
 
 
-class MessageHello implements IMessage
+class MessageHello implements Message
 {
     @String public var txt:String;
     @Short public var entityId:Int = -1;
@@ -20,7 +20,7 @@ class MessageHello implements IMessage
 }
 
 
-class PingPong implements IMessage
+class PingPong implements Message
 {
     @Int public var frameId:Int;
 
