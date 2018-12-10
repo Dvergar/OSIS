@@ -2,13 +2,12 @@ package osis;
 
 import haxe.ds.IntMap;
 import haxe.ds.Vector;
-import haxe.macro.Expr;
-import haxe.macro.Context;
 import haxe.Int64;
 
-import anette.*;
+import anette.Time;
 import anette.Protocol;
-import anette.Bytes;
+import anette.Server;
+import anette.Client;
 
 using EntityManager.ArrayEntityExtender;
 using EntityManager.BitSets;
