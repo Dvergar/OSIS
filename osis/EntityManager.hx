@@ -17,7 +17,11 @@ using EntityManager.EntityExtender;
 
 
 /**
-    Returned by event handler to know the source of the event.
+    Returned by event handler as the source of the event.
+    It's basically used as an identifier and will probably used with :
+
+    * `EntityManager.bindEntity`
+    * `EntityManager.getBoundEntity`
 **/
 typedef Connection = anette.Connection;
 
@@ -70,6 +74,17 @@ class ArrayEntityExtender
 }
 
 
+
+/**
+    Helpers for entity manipulation,
+    this is actually used like this :
+
+    * `entity.add(CPosition);` is a shortcut for `entityManager.addComponent(entity, CPosition);`
+    * `entity.remove(CDrawable)` is a shortcut for `entityManager.removeComponent(entity, CDrawable);`
+    * `entity.destroy()` is a shortcut for `entityManager.destroyEntity(entity);`
+
+    More on static extensions (https://haxe.org/manual/lf-static-extension.html)
+**/
 class EntityExtender
 {
     @:dox(hide) static public var em:EntityManager;
