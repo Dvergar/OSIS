@@ -1,6 +1,0 @@
-CPosition:
-    x: NetFloat
-    y: NetFloat
-
-CDrawable:
-    imageName: String

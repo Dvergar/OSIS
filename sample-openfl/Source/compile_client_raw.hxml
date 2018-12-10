@@ -2,10 +2,8 @@
 -hl client_raw.hl
 
 -lib osis
-# -lib yaml
 -lib podstream
 -lib anette
 -D client
 -D raw
-# -D yamlpath=./
 -debug

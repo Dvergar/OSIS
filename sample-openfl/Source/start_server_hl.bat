@@ -1,0 +1,1 @@
+haxe compile_server_hl.hxml && hl server.hl

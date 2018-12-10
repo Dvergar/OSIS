@@ -1,9 +1,0 @@
-Player:
-    CPosition:
-        x: 104
-        y: 300
-
-    CLIENT:
-        CDrawable:
-            imageName: "soldier_idle.png"
-

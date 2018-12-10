@@ -607,7 +607,10 @@ class EntityManager
 
     // NET HELPERS
     #if client
-    public function connect(address:String, port:Int)
+    /**
+        Connect to ip `address` on port `port` and returns an `NetEntityManager`.
+    **/
+    public function connect(address:String, port:Int):NetEntityManager
     {
         net.connect(address, port);
         return net;
@@ -615,7 +618,10 @@ class EntityManager
     #end
 
     #if server
-    public function listen(address:String, port:Int)
+    /**
+        Listen to ip `address` on port `port` and returns an `NetEntityManager`.
+    **/
+    public function listen(address:String, port:Int):NetEntityManager
     {
         net.listen(address, port);
         return net;

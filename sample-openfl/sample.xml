@@ -3,18 +3,10 @@
     
     <app main="Client" path="Export" file="Client" />
     <source path="Source" />
-    <!-- <source path="./../libs/anette/src/"/> -->
-    <!-- <source path="./../libs/polygonal-ds/src/"/> -->
-    <!-- <source path="./../libs/polygonal-printf/src/"/> -->
-    <!-- <source path="./../libs/hx-yaml/src/"/> -->
-    <!-- <source path="./../libs/podstream/src/"/> -->
-    <!-- <source path="./../src" /> -->
     <haxelib name="openfl" />
-    <!-- <haxelib name="yaml" /> -->
     <haxelib name="podstream" />
     <haxelib name="anette" />
     <haxelib name="osis" />
-    <!-- <haxeflag name="-D yamlpath=Source\" /> -->
     <haxedef name="client" />
     <assets path="Assets" rename="assets" />
 </project>
