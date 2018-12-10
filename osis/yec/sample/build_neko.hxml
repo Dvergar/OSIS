@@ -1,9 +1,0 @@
-# -cmd "haxelib run protohx generate protohx.json"
-
--main Main.hx
--cpp "D:\prog\#BUILDS\yaml.n"
--lib yaml
--lib nYAML
--debug
-
--cmd "neko D:\prog\#BUILDS\yaml.n"

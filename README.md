@@ -11,7 +11,6 @@ API here : [http://dvergar.github.io/osis/](http://dvergar.github.io/osis/)
  * API support for shared code betwen client & server
  * Automatic & fine-grained serialization of components via [PODStream](https://github.com/Dvergar/PODStream)
  * Avoids magic !
- * ~~YAML entities & components definition~~ _On Hold for now._
 
 (Iteration from old [ECS-Networking-Haxe](https://github.com/Dvergar/ECS-Networking-Haxe))
  

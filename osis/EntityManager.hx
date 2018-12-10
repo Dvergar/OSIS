@@ -21,10 +21,12 @@ using EntityManager.EntityExtender;
 **/
 typedef Connection = anette.Connection;
 
-@:dox(hide) typedef ListSet<T> = Array<T>;
+@:dox(hide)
+typedef ListSet<T> = Array<T>;
 
 
-@:dox(hide) class Entities
+@:dox(hide)
+class Entities
 {
     var store = new Map<Int, Entity>();
     public var reverse = new Map<Entity, Int>();
@@ -51,7 +53,8 @@ typedef Connection = anette.Connection;
 }
 
 
-@:dox(hide) class ArrayEntityExtender
+@:dox(hide)
+class ArrayEntityExtender
 {
     static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
     {
@@ -90,7 +93,8 @@ class EntityExtender
 
 // NOT SUPER FOUND OF THIS
 
-@:dox(hide) class ComponentTypeExtender
+@:dox(hide)
+class ComponentTypeExtender
 {
     static public function get__id<T:Component>(componentType:Class<T>):Int
         return (untyped componentType).__id;
@@ -119,7 +123,7 @@ class EntityExtender
 
     More infos on (https://github.com/Dvergar/PODStream)
 **/
-@:autoBuild(osis.CustomNetworkTypes.build())
+#if !macro @:autoBuild(osis.CustomNetworkTypes.build()) #end
 interface Component
 {
     public var _sid:Int;
@@ -152,7 +156,7 @@ interface Component
 
     More infos on (https://github.com/Dvergar/PODStream)
 **/
-@:autoBuild(osis.CustomNetworkTypes.build())
+#if !macro @:autoBuild(osis.CustomNetworkTypes.build()) #end
 interface IMessage
 {
     public var _sid:Int;
@@ -408,10 +412,7 @@ class EntitySet
 
 @:dox(hide) typedef ComponentDestroyData = {entity:Entity, componentId:Int};
 
-#if !macro
-// YAML
-// @:build(osis.yec.Builder.build())
-#end
+
 class EntityManager
 {
     var systems:Array<System> = new Array();
@@ -420,13 +421,11 @@ class EntityManager
 
     @:dox(hide) public var templateStore:TemplateStore = new TemplateStore();
     @:dox(hide) public var net:NetEntityManager;
-    // var self:EntityManager;  // YAML
 
     public function new()
     {
         EntityExtender.em = this;
         this.net = new NetEntityManager(this);
-        // this.self = this;  // YAML
     }
 
     /**
@@ -446,12 +445,6 @@ class EntityManager
     **/
     public function createEntity(?name:String):Entity
     {
-        // YAML
-        // var templateId = templatesByString.get(name);
-        // var templateId = entityFactory.indexOf(name);
-        // trace("wat " + name);
-        // if(templateId == -1) throw "The entity '${name}' doesn't exists";
-
         // TEMPLATE ENTITY
         if(name != null) return templateStore.getByName(name).func();
 
@@ -601,14 +594,6 @@ class EntityManager
         if(loops > maxFrameSkip) throw "out of fixed timestep";
     }
 
-    // YAML
-    // NEEDED HERE TO PREVENT REFLECTION HELL
-    // @:allow(osis.NetEntityManager)
-    // function createFactoryEntity(type:String):Entity
-    // {
-    //     return Reflect.field(this, type)();
-    // }
-
     public function markChanged<T:Component>(entity:Entity, component:T, ?filterEntitySet:EntitySet)
     {
         for(entitySet in entitySets)
@@ -729,7 +714,6 @@ class EventContainer
 **/
 class NetEntityManager extends Net
 {
-    // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
     var em:EntityManager;
     var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
@@ -770,9 +754,6 @@ class NetEntityManager extends Net
 
         trace("Components total : " + numComponents + "/" + MAX_COMPONENTS);
         trace("Net components total : " + numNetComponents + "/" + MAX_COMPONENTS);
-
-        // GET ENTITY FACTORY (MACRO) YAML
-        // entityFactory = haxe.Unserializer.run(haxe.Resource.getString("entityFactory"));
     }
 
     //////////////// SERVER //////////////
@@ -791,27 +772,6 @@ class NetEntityManager extends Net
     {
         return entitiesByConnection.get(connection);
     }
-
-    // YAML
-    // ENTITY CREATION BY TEMPLATES: Needed to handle different compositions between c/s!
-    // public function create(name:String)
-    // {
-    //     // var templateId = templatesByString.get(name);
-    //     var templateId = entityFactory.indexOf(name);
-    //     trace("wat " + name);
-    //     if(templateId == -1) throw "The entity '${name}' doesn't exists";
-
-    //     var entity:Entity = em.createFactoryEntity('create' + entityFactory[templateId]);
-    //     entity.templateId = templateId;
-
-    //     // SEND
-    //     for(connection in socket.connections)
-    //         sendCreate(connection.output, entity);
-
-    //     entities.set(entity.id, entity);
-
-    //     return entity;
-    // }
 
     public function createEntity(name:String):Entity
         return sendFactoryEntity(name, em.createEntity(name));
@@ -1104,8 +1064,6 @@ class NetEntityManager extends Net
                     var entityId = connection.input.readInt16();
                     // trace("CREATE_TEMPLATE_ENTITY " + entityId); // DEBUG
                     var templateId = connection.input.readInt8();
-                    // YAML
-                    // var entity = Reflect.field(em,'create' + entityFactory[templateId])(); // YAML
                     var entity = em.templateStore.getById(templateId).func();
                     entities.set(entityId, entity);
             }
