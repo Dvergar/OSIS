@@ -32,4 +32,4 @@ Logics are in **systems**
 
 * Based on my network library [Anette](https://github.com/Dvergar/Anette) which is actually broken on the server websocket/JS target at the moment, OSIS is inheriting the same issue
 * 64 components max, 64 entity sets max
-* It's TCP, I really want to add UDP support so stay tuned for that
+* It's TCP, I really want to UDP support so stay tuned for that
