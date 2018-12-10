@@ -15,11 +15,16 @@ using EntityManager.BitSets;
 using EntityManager.ComponentTypeExtender;
 using EntityManager.EntityExtender;
 
+
+/**
+    Returned by event handler to know the source of the event.
+**/
 typedef Connection = anette.Connection;
-typedef ListSet<T> = Array<T>;
+
+@:dox(hide) typedef ListSet<T> = Array<T>;
 
 
-class Entities
+@:dox(hide) class Entities
 {
     var store = new Map<Int, Entity>();
     public var reverse = new Map<Entity, Int>();
@@ -46,7 +51,7 @@ class Entities
 }
 
 
-class ArrayEntityExtender
+@:dox(hide) class ArrayEntityExtender
 {
     static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
     {
@@ -64,7 +69,7 @@ class ArrayEntityExtender
 
 class EntityExtender
 {
-    static public var em:EntityManager;
+    @:dox(hide) static public var em:EntityManager;
     static public inline function add<T:Component>(entity:Entity, component:T):T
     {
         em.addComponent(entity, component);
@@ -84,7 +89,8 @@ class EntityExtender
 
 
 // NOT SUPER FOUND OF THIS
-class ComponentTypeExtender
+
+@:dox(hide) class ComponentTypeExtender
 {
     static public function get__id<T:Component>(componentType:Class<T>):Int
         return (untyped componentType).__id;
@@ -94,26 +100,69 @@ class ComponentTypeExtender
 }
 
 
+/**
+    Interface for your components.
+
+    usage :
+    ```
+    class CPosition implements Component
+    {
+        @Short public var x:Int;
+        @Short public var y:Int;
+
+        public function new() {}
+    }
+    ```
+
+    Available network types are : `@Short`, `@Int`, `@Float`, `@Bool`, `@Byte`, `@String`.  
+    Variables will be serialized appropriately under the hood.
+
+    More infos on (https://github.com/Dvergar/PODStream)
+**/
 @:autoBuild(osis.CustomNetworkTypes.build())
 interface Component
 {
     public var _sid:Int;
     public var _id:Int;
-    public function unserialize(bi:haxe.io.BytesInput):Void;
-    public function serialize(bo:haxe.io.BytesOutput):Void;
+    @:dox(hide) public function unserialize(bi:haxe.io.BytesInput):Void;
+    @:dox(hide) public function serialize(bo:haxe.io.BytesOutput):Void;
 }
 
 
+/**
+    Interface for your components.
+
+    usage :
+    ```
+    class MessageInput implements IMessage
+    {
+        @Short public var x:Int;
+        @Short public var y:Int;
+        @Bool public var left:Bool;
+        @Bool public var right:Bool;
+        @Bool public var up:Bool;
+        @Bool public var down:Bool;
+
+        public function new() {}
+    }
+    ```
+
+    Available network types are : `@Short`, `@Int`, `@Float`, `@Bool`, `@Byte`, `@String`.  
+    Variables will be serialized appropriately under the hood.
+
+    More infos on (https://github.com/Dvergar/PODStream)
+**/
 @:autoBuild(osis.CustomNetworkTypes.build())
 interface IMessage
 {
     public var _sid:Int;
     public var _id:Int;
-    public function unserialize(bi:haxe.io.BytesInput):Void;
-    public function serialize(bo:haxe.io.BytesOutput):Void;
+    @:dox(hide) public function unserialize(bi:haxe.io.BytesInput):Void;
+    @:dox(hide) public function serialize(bo:haxe.io.BytesOutput):Void;
 }
 
 
+@:dox(hide)
 class BitSets
 {
     inline public static function value(index:Int):Int64
@@ -136,6 +185,7 @@ class BitSets
 }
 
 
+@:dox(hide)
 @:enum abstract CONSTANTS(Int) to Int
 {
     var MAX_COMPONENTS = 64;
@@ -146,20 +196,29 @@ class Entity
 {
     public var id:Int;
     static var ids:Int = 0;
-    public var code:Int64 = 0;
-    public var components:Vector<Component> = new Vector(MAX_COMPONENTS);
-    public var remComponents:Vector<Bool> = new Vector(MAX_COMPONENTS);
-    public var registeredSetsCode:Int64 = 0;
+    @:dox(hide) public var code:Int64 = 0;
+    @:dox(hide) public var components:Vector<Component> = new Vector(MAX_COMPONENTS);
+    @:dox(hide) public var remComponents:Vector<Bool> = new Vector(MAX_COMPONENTS);
+    @:dox(hide) public var registeredSetsCode:Int64 = 0;
 
     // NET
-    public var templateId:Int;
+    @:dox(hide) public var templateId:Int;
 
+
+    /**
+        Creates an entity.
+
+        An entity is nothing but a holder for components.
+    **/
     public function new()
     {
         this.id = ids++;
         for(i in 0...MAX_COMPONENTS) remComponents[i] = false;
     }
 
+    /**
+        Returns entity component.
+    **/
     public function get<T:Component>(componentType:Class<T>):T
     {
         var comp:T = cast components[componentType.get__id()];
@@ -168,6 +227,9 @@ class Entity
         return comp;
     }
 
+    /**
+        Tells if entity has this specific component.
+    **/
     public function has<T:Component>(componentType:Class<T>):Bool
     {
         var comp:T = cast components[componentType.get__id()];
@@ -197,28 +259,63 @@ class System
     public var em:EntityManager;
     public var net:NetEntityManager;
 
+    /**
+        Creates a system.
+
+        A system is where all the logic goes.
+        Systems acts on components via `Entityset`
+    **/
     public function new() {}
+
+    /**
+        Called after initialization from the EntityManager.
+        To be overridden.
+    **/
     public function init() {}
+
+    /**
+        Where all your checks goes.
+        To be overridden.
+    **/
     public function loop() {}
 }
 
 
+/**
+    Get an entity set via `EntityManager.getEntitySet`.
+**/
 class EntitySet
 {
-    public var _id:Int;
-    static var ids:Int = 0;
-    public var code:Int64 = 0;
-    public var em:EntityManager;
+    @:dox(hide) public var _id:Int;
+    @:dox(hide) static var ids:Int = 0;
+    @:dox(hide) public var code:Int64 = 0;
+    var em:EntityManager;
+
+    /**
+        Container of all entities.
+    **/
     public var entities:ListSet<Entity> = new ListSet();
 
-    public var _adds:ListSet<Entity> = new ListSet();
-    public var _changes:ListSet<Entity> = new ListSet();
-    public var _removes:ListSet<Entity> = new ListSet();
+    @:dox(hide) public var _adds:ListSet<Entity> = new ListSet();
+    @:dox(hide) public var _changes:ListSet<Entity> = new ListSet();
+    @:dox(hide) public var _removes:ListSet<Entity> = new ListSet();
 
+    /**
+        Container of all added entities.
+    **/
     public var adds:ListSet<Entity> = new ListSet();
+
+    /**
+        Container of all changed entities.
+    **/
     public var changes:ListSet<Entity> = new ListSet();
+
+    /**
+        Container of all removed entities.
+    **/
     public var removes:ListSet<Entity> = new ListSet();
 
+    @:dox(hide)
     public function new(em:EntityManager, componentTypeList:Array<Class<Component>>)
     {
         this._id = ids++;
@@ -226,15 +323,13 @@ class EntitySet
 
         // SET ENTITYSET SIGNATURE VIA BITS
         for(componentType in componentTypeList)
-        {
-            // trace("Systemcode " + code); // DEBUG
-            // trace(componentType.get__id()); // DEBUG
-            // trace("Adding component ID :"); // DEBUG
-            // trace(componentType.get__id()); // DEBUG
             code = code.add(componentType.get__id());
-        }
     }
 
+    /**
+        Updates all the containers for adds/changes/removes.  
+        Needed for up to date manipulation via `markChanged`
+    **/
     public function applyChanges()
     {
         for(e in _adds) entities.set(e);
@@ -250,6 +345,10 @@ class EntitySet
 
     }
 
+    /**
+        Notify the `EntityManager` that you modified a specific component.  
+        Will dispatch events to all the other systems.
+    **/
     public function markChanged<T:Component>(entity:Entity, component:T)
     {
         em.markChanged(entity, component, this);
@@ -258,7 +357,7 @@ class EntitySet
 
 
 
-class Template
+@:dox(hide) class Template
 {
     public static var ids:Int = 0;
     public var id:Int;
@@ -275,7 +374,7 @@ class Template
 }
 
 
-class TemplateStore
+@:dox(hide) class TemplateStore
 {
     public var byName:Map<String, Template> = new Map();
     public var byId:Array<Template> = new Array();
@@ -307,7 +406,7 @@ class TemplateStore
 
 
 
-typedef ComponentDestroyData = {entity:Entity, componentId:Int};
+@:dox(hide) typedef ComponentDestroyData = {entity:Entity, componentId:Int};
 
 #if !macro
 // YAML
@@ -319,8 +418,8 @@ class EntityManager
     var entitySets:Array<EntitySet> = new Array();
     var componentsToDestroy:Array<ComponentDestroyData> = new Array();
 
-    public var templateStore:TemplateStore = new TemplateStore();
-    public var net:NetEntityManager;
+    @:dox(hide) public var templateStore:TemplateStore = new TemplateStore();
+    @:dox(hide) public var net:NetEntityManager;
     // var self:EntityManager;  // YAML
 
     public function new()
@@ -330,6 +429,11 @@ class EntityManager
         // this.self = this;  // YAML
     }
 
+    /**
+        Returns an `EntitySet` of components specified by `componentTypeList`.  
+
+        Example : `var itemsEntitySet = getEntitySet([CItem, CPosition])`
+    **/
     public function getEntitySet(componentTypeList:Array<Class<Component>>):EntitySet
     {
         var entitySet = new EntitySet(this, componentTypeList);
@@ -337,6 +441,9 @@ class EntityManager
         return entitySet;
     }
 
+    /**
+        Returns a factory `Entity`, a factory entity is an entity made through template.
+    **/
     public function createEntity(?name:String):Entity
     {
         // YAML
@@ -351,6 +458,10 @@ class EntityManager
         return new Entity();
     }
 
+    /**
+        Adds a template (factory Entity) of name `name`, which is built and returned 
+        by a function `func`.
+    **/
     public function addTemplate(name:String, func:Void->Entity)
         templateStore.add(name, func);
 
@@ -428,6 +539,9 @@ class EntityManager
         return entity.get(componentType);
     }
 
+    /**
+        Adds a system to the `EntityManager`.
+    **/
     public function addSystem<T:System>(system:T)
     {
         system.em = this;
@@ -438,6 +552,9 @@ class EntityManager
         return system;
     }
 
+    /**
+        Calls `loop` of each `System`.
+    **/
     public function processAllSystems()
     {
         for(system in systems) system.loop();
@@ -454,6 +571,10 @@ class EntityManager
     // FIXED UPDATE
     public var skipTicks:Float = 1 / 60;
     public var maxFrameSkip:Int = 100;
+
+    /**
+        Rate at which network data is processed.
+    **/
     public var netfps:Int = 30;
 
     // INIT
@@ -515,9 +636,14 @@ class EntityManager
         return net;
     }
     #end
+
+    static function main() {
+        trace("Haxe is great!");
+    }
 }
 
 
+@:dox(hide)
 class Net
 {
     public var onConnection:Connection->Void;
@@ -575,6 +701,7 @@ class Net
 }
 
 
+@:dox(hide)
 class EventContainer
 {
     public var message:IMessage;
@@ -584,6 +711,7 @@ class EventContainer
 }
 
 
+@:dox(hide)
 @:enum abstract NETWORK_ORDER(Int) from Int to Int
 {
     var CREATE_ENTITY = 0;
@@ -596,6 +724,9 @@ class EventContainer
 }
 
 
+/**
+    Available via `EntityManager.listen` on server or `EntityManager.connect` on client.
+**/
 class NetEntityManager extends Net
 {
     // var entityFactory:Array<String>; // YAML FED BY NEW (SERIALIZED BY MACRO)
@@ -604,8 +735,9 @@ class NetEntityManager extends Net
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
     public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
-    public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
+    @:dox(hide) public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
 
+    @:dox(hide)
     public function new(em:EntityManager)
     {
         instance = this;
@@ -645,8 +777,8 @@ class NetEntityManager extends Net
 
     //////////////// SERVER //////////////
     #if server
-    public var entitiesByConnection:Map<Connection, Entity> = new Map();
-    public var connections:Map<Entity, Connection> = new Map();
+    @:dox(hide) public var entitiesByConnection:Map<Connection, Entity> = new Map();
+    @:dox(hide) public var connections:Map<Entity, Connection> = new Map();
 
     // USED WHEN DISCONNECTED FOR ENTITY DESTROY
     public function bindEntity(connection:Connection, entity:Entity)

@@ -1,0 +1,19 @@
+-cp osis
+-D doc-gen
+--no-output
+-main osis.EntityManager
+-lib anette
+-lib podstream
+-lib yaml
+# --macro include('osis', false)
+--each
+
+--next
+-xml docs/server.xml
+-neko dummy_server.hl
+-D server
+
+--next
+-xml docs/client.xml
+-neko dummy_client.hl
+-D client

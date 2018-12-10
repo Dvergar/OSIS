@@ -1,0 +1,1 @@
+haxe doc.hxml && haxelib run dox -i docs -in osis -o D:\Prog\Python\myportfolio\export\osis
