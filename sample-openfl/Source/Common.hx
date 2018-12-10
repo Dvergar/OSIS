@@ -56,14 +56,10 @@ class MovementSystem extends System
     var entitySet:EntitySet;
 
     public override function init()
-    {
         entitySet = em.getEntitySet([CPosition]);
-
-    }
 
     public override function loop()
     {
-        // trace("loop");
         entitySet.applyChanges();
 
         for(entity in entitySet.entities)

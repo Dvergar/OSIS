@@ -28,9 +28,7 @@ class DrawableSystem extends System
     var entitySet:EntitySet;
 
     public override function init()
-    {
         entitySet = em.getEntitySet([CDrawable, CPosition]);
-    }
 
     public override function loop()
     {
@@ -91,9 +89,7 @@ class DebugSystem extends System
     var entitySet:EntitySet;
 
     public override function init()
-    {
         entitySet = em.getEntitySet([CTest, CPosition]);
-    }
 
     public override function loop()
     {
