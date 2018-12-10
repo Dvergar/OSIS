@@ -79,9 +79,9 @@ class ArrayEntityExtender
     Helpers for entity manipulation,
     this is actually used like this :
 
-    * `entity.add(CPosition);` is a shortcut for `entityManager.addComponent(entity, CPosition);`
-    * `entity.remove(CDrawable)` is a shortcut for `entityManager.removeComponent(entity, CDrawable);`
-    * `entity.destroy()` is a shortcut for `entityManager.destroyEntity(entity);`
+    * `entity.add(CPosition);` *shortcut for* `entityManager.addComponent(entity, CPosition);`
+    * `entity.remove(CDrawable)` *shortcut for* `entityManager.removeComponent(entity, CDrawable);`
+    * `entity.destroy()` *shortcut for* `entityManager.destroyEntity(entity);`
 
     More on static extensions (https://haxe.org/manual/lf-static-extension.html)
 **/
@@ -367,6 +367,8 @@ class EntitySet
     /**
         Notify the `EntityManager` that you modified a specific component.  
         Will dispatch events to all the other systems.
+
+        *Only local, won't dispatch through the network.*
     **/
     public function markChanged<T:Component>(entity:Entity, component:T)
     {
@@ -456,7 +458,11 @@ class EntityManager
     }
 
     /**
-        Returns a factory `Entity`, a factory entity is an entity made through template.
+        If `name` is specified, returns a template `Entity`.  
+        A template entity is a composition of components and is added 
+        via `EntityManager.addTemplate`.
+
+        If `name` isn't specified, returns an `Entity` as a mere holder and without any component.
     **/
     public function createEntity(?name:String):Entity
     {
@@ -473,6 +479,14 @@ class EntityManager
     public function addTemplate(name:String, func:Void->Entity)
         templateStore.add(name, func);
 
+    /**
+        Destroys an entity, **change is not immediate !** the event is dispatched 
+        only at next loop.
+
+        Each system should be able to process every entity change before its destruction.  
+        Don't assume that systems are running in order (even though it might be necessary in some
+        corner cases such as keeping determinism).
+    **/
     public function destroyEntity(entity:Entity)
     {
         for(component in entity.components)
@@ -561,7 +575,7 @@ class EntityManager
     }
 
     /**
-        Calls `loop` of each `System`.
+        Updates each `System` (`System.loop` call) and should be called from your game loop.
     **/
     public function processAllSystems()
     {
@@ -609,6 +623,15 @@ class EntityManager
         if(loops > maxFrameSkip) throw "out of fixed timestep";
     }
 
+    /**
+        Notify the `EntityManager` that you modified a specific component.  
+        Will dispatch events to all the other systems.
+
+        Won't dispatch through the network (use `NetEntityManager.markChanged` for that).
+
+        if `entitySet` is specified, will not notify that very `EntitySet`.
+        Prevents circular notification.
+    **/
     public function markChanged<T:Component>(entity:Entity, component:T, ?filterEntitySet:EntitySet)
     {
         for(entitySet in entitySets)
@@ -732,6 +755,9 @@ class EventContainer
 
 /**
     Available via `EntityManager.listen` on server or `EntityManager.connect` on client.
+
+    `NetEntityManager` is basically mirroring `EntityManager` but each call
+    will be done locally AND through the network.
 **/
 class NetEntityManager extends Net
 {
@@ -739,7 +765,7 @@ class NetEntityManager extends Net
     var serializableTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // SERIALIZED SPECIFIC IDS
     var allTypes:Vector<Class<Component>> = new Vector(MAX_COMPONENTS); // ALL COMPONENTS IDS
     var eventListeners:IntMap<EventContainer> = new IntMap();
-    public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
+    @:dox(hide) public var entities = new Entities(); // MAPS SERVER>CLIENT IDS
     @:dox(hide) public static var instance:NetEntityManager; // USED BY CUSTOMNETWORKTYPES FOR ENTITY (MEH)
 
     @:dox(hide)
@@ -943,6 +969,15 @@ class NetEntityManager extends Net
         }
     }
 
+    /**
+        Notify the `EntityManager` that you modified a specific component.  
+        Will dispatch events to all the other systems.
+
+        Will also dispatch through the network.
+
+        if `entitySet` is specified, will not notify that very `EntitySet`.
+        Prevents circular notification.
+    **/
     public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
     {
         if(component._sid == -1) throw 'Component $component is not serializable';
@@ -1091,11 +1126,11 @@ class NetEntityManager extends Net
         }
     }
 
-    public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
-    {
-        // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
-        // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
-    }
+    // public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet)
+    // {
+    //     // DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
+    //     // WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
+    // }
     #end
 
     @:allow(osis.EntityManager)
