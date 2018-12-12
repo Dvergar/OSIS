@@ -1,5 +1,4 @@
-OSIS
-====
+![OSIS Logo](logo.png)
 
 API here : [http://dvergar.github.io/osis/](http://dvergar.github.io/osis/)
 
