@@ -113,7 +113,7 @@ net.addEvent(MessageHello, function(msg:MessageHello, connection:Connection) {
 ```
 
 And the sender sends the message
-```
+```haxe
 var msg = new MessageHello();
 msg.txt = "coucou";
 net.sendEvent(msg);
