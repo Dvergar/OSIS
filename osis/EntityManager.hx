@@ -148,7 +148,7 @@ interface Component
 
 
 /**
-    Interface for your components.
+    Interface for your messages.
 
     usage :
     ```
