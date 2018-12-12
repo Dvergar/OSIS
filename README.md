@@ -36,19 +36,19 @@ Logics are in **systems**
 
 #### Setup
 
-```
+```haxe
 var em:EntityManager = new EntityManager();
 ```
 
 If you're going networked you can get the network entity manager via.
 
-```
+```haxe
 var net = em.listen("127.0.0.1", 32000);
 ```
 
 on the server and
 
-```
+```haxe
 var net = em.connect("127.0.0.1", 32000);
 ```
 on the client.
@@ -56,7 +56,7 @@ on the client.
 #### EntitySet
 
 An entity set will allow to manipulate entities having the specified components; here `CPosition` and `CMonster`.
-```
+```haxe
 var entitySet = em.getEntitySet([CPosition, CMonster]);
 ```
 
@@ -68,7 +68,7 @@ A system is a really simple structure that will give you a `loop` where you can 
 
 Example :
 
-```
+```haxe
 class MovementSystem extends System
 {
     var entitySet:EntitySet;
@@ -96,7 +96,7 @@ class MovementSystem extends System
 
 The content of an event is called a `Message` and will be shared to client & server, here is an example :
 
-```
+```haxe
 class MessageHello implements Message
 {
     @String public var txt:String;
@@ -106,7 +106,7 @@ class MessageHello implements Message
 ```
 
 The receiver registers to the event
-```
+```haxe
 net.addEvent(MessageHello, function(msg:MessageHello, connection:Connection) {
     trace(msg.txt);
 });
@@ -123,7 +123,7 @@ net.sendEvent(msg);
 
 A template is a set of components defining a specific entity
 
-```
+```haxe
 public function player()
 {
   var entity = em.createEntity();
@@ -139,7 +139,7 @@ and call the template like that `em.createEntity("player");`
 
 
 #### Plugging everything together
-```
+```haxe
 class Server
 {
     var em:EntityManager = new EntityManager();
