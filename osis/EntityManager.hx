@@ -472,7 +472,7 @@ class EntityManager
     }
 
     /**
-        Adds a template (factory Entity) of name `name`, which is built and returned 
+        Adds a template of name `name`, which is built and returned 
         by a function `func`.
     **/
     public function addTemplate(name:String, func:Void->Entity)
