@@ -14,7 +14,7 @@ Available on [haxelib](https://lib.haxe.org/p/osis/).
 
 *(Iteration from old [ECS-Networking-Haxe](https://github.com/Dvergar/ECS-Networking-Haxe))*
  
-Check out [the sample](https://github.com/Dvergar/SISO/tree/master/sample-openfl) for a quick overview of the architecture. The library assumes you are in a client/server architecture where the server is authoritative.
+Check out [the sample](https://github.com/Dvergar/OSIS/tree/master/sample-openfl) for a quick overview of the architecture. The library assumes you are in a client/server architecture where the server is authoritative.
 
 ### ECS ?
 
