@@ -493,12 +493,7 @@ class EntityManager
                 _removeComponentInstance(entity, component);
 
         if(net.entities.get(entity.id) == entity)
-        {
-            trace("NETWORKED ENTITY DESTROYED");
             net.entities.remove(entity.id);
-        }
-
-        trace("ENTITY DESTROYED");
     }
 
     public function addComponent<T:Component>(entity:Entity, component:T):T
