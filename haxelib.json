@@ -4,11 +4,11 @@
 	"license": "BSD",
 	"tags": ["networking", "entity", "component", "ECS", "architecture"],
 	"description": "Entity Component System architecture with network support",
-	"version": "0.0.1",
+	"version": "0.8.0",
 	"releasenote": "First release",
 	"contributors": [ "caribou" ],
 	"dependencies" : {
 		"anette" : "",
-		"polygonal-ds" : ""
+		"podstream" : ""
 	}
 }
