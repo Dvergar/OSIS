@@ -33,6 +33,9 @@ Logics are in **systems**
 * 64 components max, 64 entity sets max
 * It's TCP, I really want UDP support so stay tuned for that
 
+### Future
+Considering having immutable components.
+
 ### Usage
 
 #### Setup
