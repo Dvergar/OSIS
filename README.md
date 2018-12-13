@@ -11,7 +11,7 @@ API here : [http://dvergar.github.io/osis/](http://dvergar.github.io/osis/)
  * Automatic & fine-grained serialization of components via [PODStream](https://github.com/Dvergar/PODStream)
  * Avoids magic !
 
-(Iteration from old [ECS-Networking-Haxe](https://github.com/Dvergar/ECS-Networking-Haxe))
+*(Iteration from old [ECS-Networking-Haxe](https://github.com/Dvergar/ECS-Networking-Haxe))*
  
 Check out [the sample](https://github.com/Dvergar/SISO/tree/master/sample-openfl) for a quick overview of the architecture. The library assumes you are in a client/server architecture where the server is authoritative.
 
