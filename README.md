@@ -1,6 +1,7 @@
 ![OSIS Logo](logo.png)
 
-**API here : [http://dvergar.github.io/osis/ (latest, ](http://dvergar.github.io/osis/) [0.5.0)](http://dvergar.github.io/osis/0.5.0/)**
+**API here : [http://dvergar.github.io/osis/ (latest, ](http://dvergar.github.io/osis/) [0.5.0)](http://dvergar.github.io/osis/0.5.0/)**  
+Available on [haxelib](https://lib.haxe.org/p/osis/).
 
 **Entity Component System architecture with networking support** (for haxe).
 
@@ -94,7 +95,7 @@ class MovementSystem extends System
 
 #### Network event
 
-The content of an event is called a `Message` and will be shared to client & server, here is an example :
+The content of an event is called a `Message` and will be shared among client & server, here is an example :
 
 ```haxe
 class MessageHello implements Message
