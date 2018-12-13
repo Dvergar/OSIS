@@ -1,6 +1,6 @@
 ![OSIS Logo](logo.png)
 
-**API here : [http://dvergar.github.io/osis/](http://dvergar.github.io/osis/)**
+**API here : [http://dvergar.github.io/osis/ (latest, ](http://dvergar.github.io/osis/) [0.5.0)](http://dvergar.github.io/osis/0.5.0/)**
 
 **Entity Component System architecture with networking support** (for haxe).
 
