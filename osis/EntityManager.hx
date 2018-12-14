@@ -434,6 +434,7 @@ class EntityManager
     var systems:Array<System> = new Array();
     var entitySets:Array<EntitySet> = new Array();
     var componentsToDestroy:Array<ComponentDestroyData> = new Array();
+    var entities:Map<Int, Entity> = new Map();
 
     @:dox(hide) public var templateStore:TemplateStore = new TemplateStore();
     @:dox(hide) public var net:NetEntityManager;
@@ -471,6 +472,21 @@ class EntityManager
         return new Entity();
     }
 
+    public function createEntity2(?name:String):Entity
+    {
+        var entity:Entity;
+
+        // TEMPLATE ENTITY
+        if(name != null)
+            entity = templateStore.getByName(name).func();
+        else
+            entity = new Entity();
+
+        entities.set(entity.id, entity);
+
+        return entity;
+    }
+
     /**
         Adds a template (factory Entity) of name `name`, which is built and returned 
         by a function `func`.
@@ -499,6 +515,32 @@ class EntityManager
         }
 
         trace("ENTITY DESTROYED");
+    }
+
+
+    public function addComponent2<T:Component>(viewEntity:Entity, newComponent:T):T
+    {
+        // entity = entities.get(viewEntity.id);
+        // entity = viewEntity;
+        entity.components[newComponent._id] = newComponent;
+        // entity.code = entity.code.add(newComponent._id);
+
+        for(entitySet in entitySets)
+        {
+            if(entitySet.code.containsBitSet(viewEntity.code))
+            {
+                var idCode = Int64.ofInt(0).add(entitySet._id);
+
+                // SKIP IF addComponent is called from that very entitySet...
+                if(idCode.containsBitSet(viewEntity.registeredSetsCode)) continue;
+
+                var clonedEntity = viewEntity.clone();
+                entitySet._adds.set(viewEntity);
+                viewEntity.registeredSetsCode = viewEntity.registeredSetsCode.add(entitySet._id);
+            }
+        }
+
+        return newComponent;
     }
 
     public function addComponent<T:Component>(entity:Entity, component:T):T
