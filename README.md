@@ -23,7 +23,7 @@ Logics are in **systems**
 **Systems** act on **components**
 
 ### Networking
-* Components updates are always done from server to clients (not the opposite) and only at your demand.
+* Components updates are always done from server to clients (not the other way) and only at your demand.
 * Messages are the only types of network events that can go both ways.
 * In a game w/ this framework, communications should sum up to the client sending a list of pressed keys and/or events and the server dispatching everything else.
 
