@@ -148,7 +148,7 @@ interface Component
 
 
 /**
-    Interface for your components.
+    Interface for your messages.
 
     usage :
     ```
@@ -488,7 +488,7 @@ class EntityManager
     }
 
     /**
-        Adds a template (factory Entity) of name `name`, which is built and returned 
+        Adds a template of name `name`, which is built and returned 
         by a function `func`.
     **/
     public function addTemplate(name:String, func:Void->Entity)
@@ -509,12 +509,7 @@ class EntityManager
                 _removeComponentInstance(entity, component);
 
         if(net.entities.get(entity.id) == entity)
-        {
-            trace("NETWORKED ENTITY DESTROYED");
             net.entities.remove(entity.id);
-        }
-
-        trace("ENTITY DESTROYED");
     }
 
 
@@ -849,18 +844,28 @@ class NetEntityManager extends Net
     @:dox(hide) public var entitiesByConnection:Map<Connection, Entity> = new Map();
     @:dox(hide) public var connections:Map<Entity, Connection> = new Map();
 
-    // USED WHEN DISCONNECTED FOR ENTITY DESTROY
+
+    /**
+        Links `connection` to `entity`.  
+        The linked `entity` will be destroyed on disconnection.
+    **/
     public function bindEntity(connection:Connection, entity:Entity)
     {
         entitiesByConnection.set(connection, entity);
         connections.set(entity, connection);
     }
 
+    /**
+        Get `entity` registered via `bindEntity`.
+    **/
     public function getBoundEntity(connection:Connection)
     {
         return entitiesByConnection.get(connection);
     }
 
+    /**
+        Create an entity of template `name` locally AND on the network.
+    **/
     public function createEntity(name:String):Entity
         return sendFactoryEntity(name, em.createEntity(name));
 
@@ -908,6 +913,9 @@ class NetEntityManager extends Net
         output.writeInt8(entity.templateId);
     }
 
+    /**
+        Destroy an entity locally AND on the network.
+    **/
     public function destroyEntity(entity:Entity):Void
     {
         for(connection in socket.connections)
@@ -934,6 +942,9 @@ class NetEntityManager extends Net
         return component;
     }
 
+    /**
+        Add an component locally AND on the network.
+    **/
     public function addComponent<T:Component>(entity:Entity, component:T):T
     {
         for(connection in socket.connections)
@@ -943,6 +954,10 @@ class NetEntityManager extends Net
         return component;
     }
 
+    /**
+        Add an component locally AND on the network at the
+        specified connection linked to `connEntity`.
+    **/
     public function addComponentTo<T:Component>(entity:Entity, component:T, connEntity:Entity):T
     {
         return sendAddComponent(entity.id, component, connections.get(connEntity));
@@ -955,6 +970,9 @@ class NetEntityManager extends Net
         connection.output.writeInt8(componentId);
     }
 
+    /**
+        Remove a component locally AND on the network.
+    **/
     public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
         for(connection in socket.connections)
@@ -962,6 +980,9 @@ class NetEntityManager extends Net
         entity.remove(componentType);
     }
 
+    /**
+        Send all the server entities to `connection`.
+    **/
     public function sendWorldStateTo(connection:Connection)
     {
         var connectionEntity = entitiesByConnection.get(connection);
@@ -1058,6 +1079,9 @@ class NetEntityManager extends Net
         eventContainer.func(eventContainer.message, connection);
     }
 
+    /**
+        Send event `message` on the network to everyone or only to `connection` if specified.
+    **/
     public function sendEvent(message:Message, ?connection:Connection)
     {
         #if server
@@ -1080,6 +1104,24 @@ class NetEntityManager extends Net
         message.serialize(output);
     }
 
+    /**
+        Link an event `messageClass` to a `func`.
+
+        Usage :
+
+        ```
+        class MessageHello implements Message
+        {
+            @String public var txt:String;
+
+            public function new() {}
+        }
+
+        netEntityManager.addEvent(MessageHello, function(msg:MessageHello, connection:Connection) {
+            trace(msg.txt);
+        });
+        ```
+    **/
     public function addEvent<T:Message>(messageClass:Class<Message>,
                                               func:T->Connection->Void)
     {
