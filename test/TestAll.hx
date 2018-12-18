@@ -52,8 +52,8 @@ class TestAll
         Test.assertEquals(entitySet._id, 0);
 
         var entity = em.createEntity();
-        em.addComponent(entity, new CPosition());
-        em.addComponent(entity, new CVector());
+        var pos =    em.addComponent(entity, new CPosition());
+        var vector = em.addComponent(entity, new CVector());
 
         //// CHECKING IF ENTITY HAS BEEN ADDED
         Test.assertEquals(entitySet._adds.length, 1);
@@ -70,10 +70,13 @@ class TestAll
         //// CHECKING IF ENTITIES++
         Test.assertEquals(entitySet.entities.length, 1);
 
-        //// CHECKING HAS ON REMOVED ELEMENTS BEFORE APPLYCHANGES
+        //// CHECKING HAS ON REMOVED COMPONENTS BEFORE APPLYCHANGES
         em.removeComponent(entity, CVector);
         Test.assertFalse(entity.has(CVector));
-        
+
+        //// CHECKING GET ON REMOVED COMPONENTS BEFORE APPLYCHANGES
+        Test.assertEquals(entity.get(CVector), vector);
+
         //// CHECKING APPLYCHANGES ON REMOVE
         entitySet.applyChanges();
         Test.assertEquals(entitySet.removes.length, 1);

@@ -251,6 +251,8 @@ class Entity
     **/
     public function has<T:Component>(componentType:Class<T>):Bool
     {
+        var comp:T = cast components[componentType.get__id()];
+        if(comp == null) return false;    
         return !remComponents[componentType.get__id()];
     }
 
@@ -539,6 +541,7 @@ class EntityManager
                 if(!idCode.containsBitSet(entity.registeredSetsCode)) continue;
 
                 entitySet._removes.set(entity);
+                // entitySet._changes.remove(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode.remove(entitySet._id);
             }
         }
@@ -732,7 +735,7 @@ class EventContainer
 
 
 @:dox(hide)
-@:enum abstract NETWORK_ORDER(Int) from Int to Int
+enum abstract NETWORK_ORDER(Int) from Int to Int
 {
     var CREATE_ENTITY = 0;
     var CREATE_TEMPLATE_ENTITY = 1;
