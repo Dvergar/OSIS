@@ -541,13 +541,12 @@ class EntityManager
                 if(!idCode.containsBitSet(entity.registeredSetsCode)) continue;
 
                 entitySet._removes.set(entity);
-                entitySet._changes.remove(entity);
                 entity.registeredSetsCode = entity.registeredSetsCode.remove(entitySet._id);
             }
         }
         
         entity.remComponents[componentId] = true;
-        componentsToDestroy.push({entity:entity, componentId:componentId});  // TEMPORARY, hopefully
+        componentsToDestroy.push({entity:entity, componentId:componentId});
     }
 
     public function getComponent<T:Component>(entity:Entity, componentType:Class<T>):T

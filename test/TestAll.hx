@@ -70,8 +70,11 @@ class TestAll
         //// CHECKING IF ENTITIES++
         Test.assertEquals(entitySet.entities.length, 1);
 
-        //// CHECKING APPLYCHANGES ON REMOVE
+        //// CHECKING HAS ON REMOVED ELEMENTS BEFORE APPLYCHANGES
         em.removeComponent(entity, CVector);
+        Test.assertFalse(entity.has(CVector));
+        
+        //// CHECKING APPLYCHANGES ON REMOVE
         entitySet.applyChanges();
         Test.assertEquals(entitySet.removes.length, 1);
 
@@ -113,30 +116,11 @@ class SomethingSystem extends System
     public function new()
     {
         super();
-        trace("new");
-        // TestAll.instance.assertTrue(true);
+        trace("System New");
     }
 
     public override function init()
     {
-        trace("init");
-        // entitySet = em.getEntitySet([CNetPosition, CPosition]);
+        trace("System Init");
     }
-
-    // public override function loop()
-    // {
-    //     entitySet.applyChanges();
-
-    //     for(entity in entitySet.entities)
-    //     {
-    //         var netPos = entity.get(CNetPosition);
-    //         var pos = entity.get(CPosition);
-
-    //         netPos.x = pos.x;
-    //         netPos.y = pos.y;
-    //         // trace("netpos " + netPos);
-
-    //         net.markChanged(entity, netPos);
-    //     }
-    // }
 }
