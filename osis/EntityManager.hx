@@ -3,6 +3,7 @@ package osis;
 import haxe.ds.IntMap;
 import haxe.ds.Vector;
 import haxe.Int64;
+import haxe.io.BytesOutput;
 
 import anette.Time;
 import anette.Protocol;
@@ -863,7 +864,7 @@ class NetEntityManager extends Net
     //     return entity;
     // }
 
-    function sendCreate(output:haxe.io.BytesOutput, entity:Entity):Void
+    function sendCreate(output:BytesOutput, entity:Entity):Void
     {
         output.writeInt8(CREATE_TEMPLATE_ENTITY);
         output.writeInt16(entity.id);
@@ -889,12 +890,12 @@ class NetEntityManager extends Net
         connections.remove(entity);  // TEMP
     }
 
-    inline function sendAddComponent<T:Component>(entityId:Int, component:T, conn:Connection):T
+    inline function sendAddComponent<T:Component>(entityId:Int, component:T, output:BytesOutput):T
     {
-        conn.output.writeInt8(ADD_COMPONENT);
-        conn.output.writeInt16(entityId);
-        conn.output.writeInt8(component._sid);
-        component.serialize(conn.output);
+        output.writeInt8(ADD_COMPONENT);
+        output.writeInt16(entityId);
+        output.writeInt8(component._sid);
+        component.serialize(output);
 
         return component;
     }
@@ -905,7 +906,7 @@ class NetEntityManager extends Net
     public function addComponent<T:Component>(entity:Entity, component:T):T
     {
         for(connection in socket.connections)
-            sendAddComponent(entity.id, component, connection);
+            sendAddComponent(entity.id, component, connection.output);
 
         entity.add(component);
         return component;
@@ -917,14 +918,14 @@ class NetEntityManager extends Net
     **/
     public function addComponentTo<T:Component>(entity:Entity, component:T, connEntity:Entity):T
     {
-        return sendAddComponent(entity.id, component, connections.get(connEntity));
+        return sendAddComponent(entity.id, component, connections.get(connEntity).output);
     }
 
-    inline function sendRemoveComponent(entityId:Int, componentId:Int, connection:Connection)
+    inline function sendRemoveComponent(entityId:Int, componentId:Int, output:BytesOutput)
     {
-        connection.output.writeInt8(REMOVE_COMPONENT);
-        connection.output.writeInt16(entityId);
-        connection.output.writeInt8(componentId);
+        output.writeInt8(REMOVE_COMPONENT);
+        output.writeInt16(entityId);
+        output.writeInt8(componentId);
     }
 
     /**
@@ -933,7 +934,7 @@ class NetEntityManager extends Net
     public function removeComponent<T:Class<Component>>(entity:Entity, componentType:T)
     {
         for(connection in socket.connections)
-            sendRemoveComponent(entity.id, componentType.get__sid(), connection);
+            sendRemoveComponent(entity.id, componentType.get__sid(), connection.output);
         entity.remove(componentType);
     }
 
@@ -975,7 +976,7 @@ class NetEntityManager extends Net
                 {
                     var sid = (cast allTypes[componentId]).__sid;
                     if(sid == -1) continue; // NOT NETWORKED
-                    sendRemoveComponent(entity.id, sid, connection);
+                    sendRemoveComponent(entity.id, sid, connection.output);
                 }
             }
 
@@ -983,7 +984,7 @@ class NetEntityManager extends Net
             if(entity.code.contains(componentId))
             {
                 if(entity.components[componentId]._sid == -1) continue;
-                sendAddComponent(entity.id, entity.components[componentId], connection);
+                sendAddComponent(entity.id, entity.components[componentId], connection.output);
             }
         }
     }
@@ -1054,7 +1055,7 @@ class NetEntityManager extends Net
         #end
     }
 
-    inline function _sendEvent(output:haxe.io.BytesOutput, message:Message)
+    inline function _sendEvent(output:BytesOutput, message:Message)
     {
         output.writeInt8(EVENT);
         output.writeInt8(message._sid);
