@@ -205,7 +205,7 @@ class BitSets
 
 
 @:dox(hide)
-@:enum abstract CONSTANTS(Int) to Int
+enum abstract CONSTANTS(Int) to Int
 {
     var MAX_COMPONENTS = 64;
 }
@@ -737,13 +737,13 @@ class EventContainer
 @:dox(hide)
 enum abstract NETWORK_ORDER(Int) from Int to Int
 {
-    var CREATE_ENTITY = 0;
-    var CREATE_TEMPLATE_ENTITY = 1;
-    var ADD_COMPONENT = 2;
-    var UPDATE_COMPONENT = 3;
-    var REMOVE_COMPONENT = 4;
-    var DESTROY_ENTITY = 5;
-    var EVENT = 6;
+    var CREATE_ENTITY;
+    var CREATE_TEMPLATE_ENTITY;
+    var ADD_COMPONENT;
+    var UPDATE_COMPONENT;
+    var REMOVE_COMPONENT;
+    var DESTROY_ENTITY;
+    var EVENT;
 }
 
 
