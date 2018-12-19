@@ -4,8 +4,8 @@
 	"license": "BSD",
 	"tags": ["networking", "entity", "component", "ECS", "architecture"],
 	"description": "Entity Component System architecture with network support",
-	"version": "0.8.0",
-	"releasenote": "First release",
+	"version": "0.8.1",
+	"releasenote": "Minor update",
 	"contributors": [ "caribou" ],
 	"dependencies" : {
 		"anette" : "",
