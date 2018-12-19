@@ -58,6 +58,34 @@ class Entities
 
 
 @:dox(hide)
+class Connections
+{
+    var store = new Map<Entity, Connection>();
+    public var reverse = new Map<Connection, Entity>();
+    
+    public function new() {}
+    
+    public function set(entity:Entity, connection:Connection)
+    {
+        store.set(entity, connection);
+        reverse.set(connection, entity);
+    }
+    
+    public function get(entity:Entity)
+        return store.get(entity);
+    
+    public function remove(entity:Entity)
+    {
+        reverse.remove(store.get(entity));
+        store.remove(entity);
+    }
+    
+    public function iterator()
+        return store.iterator();
+}
+
+
+@:dox(hide)
 class ArrayEntityExtender
 {
     static public function has(arr:ListSet<Entity>, newItem:Entity):Bool
@@ -799,8 +827,7 @@ class NetEntityManager extends Net
 
     //////////////// SERVER //////////////
     #if server
-    @:dox(hide) public var entitiesByConnection:Map<Connection, Entity> = new Map();
-    @:dox(hide) public var connections:Map<Entity, Connection> = new Map();
+    @:dox(hide) public var connections:Connections = new Connections();
 
 
     /**
@@ -808,18 +835,13 @@ class NetEntityManager extends Net
         The linked `entity` will be destroyed on disconnection.
     **/
     public function bindEntity(connection:Connection, entity:Entity)
-    {
-        entitiesByConnection.set(connection, entity);
         connections.set(entity, connection);
-    }
 
     /**
         Get `entity` registered via `bindEntity`.
     **/
     public function getBoundEntity(connection:Connection)
-    {
-        return entitiesByConnection.get(connection);
-    }
+        return connections.reverse.get(connection);
 
     /**
         Create an entity of template `name` locally AND on the network.
@@ -885,9 +907,7 @@ class NetEntityManager extends Net
         entity.destroy();
 
         // CLEANUP
-        var connection = connections.get(entity);
-        entitiesByConnection.remove(connection);
-        connections.remove(entity);  // TEMP
+        connections.remove(entity);
     }
 
     inline function sendAddComponent<T:Component>(entityId:Int, component:T, output:BytesOutput):T
@@ -943,7 +963,7 @@ class NetEntityManager extends Net
     **/
     public function sendWorldStateTo(connection:Connection)
     {
-        var connectionEntity = entitiesByConnection.get(connection);
+        var connectionEntity = connections.reverse.get(connection);
         if(connectionEntity == null) throw "Connection has to have a bound entity";
 
         for(entity in entities)
