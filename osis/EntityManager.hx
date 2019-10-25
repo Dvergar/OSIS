@@ -835,7 +835,7 @@ class NetEntityManager extends Net {
 		entity.destroy();
 
 		// CLEANUP
-		connections.remove(entity);
+		// connections.remove(entity);
 	}
 
 	inline function sendAddComponent<T:Component>(entityId:Int, component:T, output:BytesOutput):T {
