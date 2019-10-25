@@ -567,7 +567,6 @@ class EntityManager {
 	}
 
 	// FIXED UPDATE
-	public var skipTicks:Float = 1 / 60;
 	public var maxFrameSkip:Int = 100;
 
 	/**
@@ -580,14 +579,14 @@ class EntityManager {
 	var nextGameTick:Float = Time.now();
 	var lastNetTick:Float = Time.now();
 
-	public function fixedUpdate(func:Void->Void) {
+	public function fixedUpdate(skipTicks:Float, func:Void->Void) {
 		if ((Time.now() - lastNetTick) > (1 / netfps)) {
 			net.pump();
 			lastNetTick = Time.now();
 		}
 
 		loops = 0;
-		while (Time.now() > nextGameTick && loops < maxFrameSkip) {
+		while (Sys.time() > nextGameTick && loops < maxFrameSkip) {
 			func();
 			nextGameTick += skipTicks;
 			loops++;
