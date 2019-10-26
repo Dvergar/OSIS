@@ -1093,8 +1093,7 @@ class NetEntityManager extends Net {
 
 	@:dox(hide)
 	public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet) {
-		// DUMMY, ACTUALLY USED FOR SERVER TO PREVENT ISSUES
-		// WHEN SHARING SAME SYSTEM BETWEEN CLIENT & SERVER
+		em.markChanged(entity, component, entitySet);
 	}
 	#end
 
