@@ -742,7 +742,7 @@ class NetEntityManager extends Net {
 			if (serializable == null)
 				continue; // Shouldn't be in the array in the first place !??
 			var componentType:Class<Component> = cast Type.resolveClass(serializable);
-
+			
 			// NETWORKED COMPONENTS
 			var componentNetId = componentType.get__sid();
 			if (componentNetId != -1) {
@@ -847,7 +847,7 @@ class NetEntityManager extends Net {
 	}
 
 	/**
-		Add an component locally AND on the network.
+		Add a component locally AND on the network.
 	**/
 	public function addComponent<T:Component>(entity:Entity, component:T):T {
 		for (connection in socket.connections)
@@ -858,7 +858,7 @@ class NetEntityManager extends Net {
 	}
 
 	/**
-		Add an component locally AND on the network at the
+		Add a component locally AND on the network at the
 		specified connection linked to `connEntity`.
 	**/
 	public function addComponentTo<T:Component>(entity:Entity, component:T, connEntity:Entity):T {
@@ -1023,6 +1023,9 @@ class NetEntityManager extends Net {
 
 	//////////////// CLIENT //////////////
 	#if client
+	public function createEntity(name:String):Entity
+		return em.createEntity(name);
+
 	override function onData(connection:Connection) {
 		while (connection.input.mark - connection.input.position > 0) {
 			var msgtype:NETWORK_ORDER = connection.input.readInt8();
@@ -1094,6 +1097,11 @@ class NetEntityManager extends Net {
 	@:dox(hide)
 	public function markChanged<T:Component>(entity:Entity, component:T, ?entitySet:EntitySet) {
 		em.markChanged(entity, component, entitySet);
+	}
+
+	public function addComponent<T:Component>(entity:Entity, component:T):T {
+		entity.add(component);
+		return component;
 	}
 	#end
 
