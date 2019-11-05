@@ -552,12 +552,20 @@ class EntityManager {
 	}
 
 	/**
-		Updates each `System` (`System.loop` call) and should be called from your game loop.
+		Updates each `System` (`System.loop` call), should be called from your game loop.
 	**/
 	public function processAllSystems() {
 		for (system in systems)
 			system.loop();
 
+		applyRemoves();
+	}
+
+
+	/**
+		Effectively apply any removes to the EntitySystem, should be called from your game loop.
+	**/
+	public function applyRemoves() {
 		for (_ in componentsToDestroy) {
 			_.entity.components[_.componentId] = null;
 			_.entity.remComponents[_.componentId] = false;
@@ -742,7 +750,7 @@ class NetEntityManager extends Net {
 			if (serializable == null)
 				continue; // Shouldn't be in the array in the first place !??
 			var componentType:Class<Component> = cast Type.resolveClass(serializable);
-			
+
 			// NETWORKED COMPONENTS
 			var componentNetId = componentType.get__sid();
 			if (componentNetId != -1) {
