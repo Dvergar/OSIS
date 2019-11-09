@@ -29,12 +29,10 @@ Logics are in **systems**
 
 **Notes**
 
-* Based on my network library [Anette](https://github.com/Dvergar/Anette) which is actually broken on the server websocket/JS target at the moment, OSIS is inheriting the same issue
+* Based on my network library [Anette](https://github.com/Dvergar/Anette) TCP (no websockets)
 * 64 components max, 64 entity sets max
-* It's TCP, I really want UDP support so stay tuned for that
+* Will soon make it network-library agnostic via an API as i want to have websockets w/ [hxWebSockets](https://github.com/ianharrigan/hxWebSockets) soon. And [udprotean](https://gitlab.com/haath/udprotean) for UDP later.
 
-### Future
-Considering having immutable components.
 
 ### Usage
 
