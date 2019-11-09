@@ -220,6 +220,7 @@ enum abstract CONSTANTS(Int) to Int {
 	var MAX_COMPONENTS = 64;
 }
 
+@:using(osis.EntityManager.EntityExtender)
 class Entity {
 	public var id:Int;
 
@@ -560,7 +561,6 @@ class EntityManager {
 
 		applyRemoves();
 	}
-
 
 	/**
 		Effectively apply any removes to the EntitySystem, should be called from your game loop.
@@ -1060,6 +1060,7 @@ class NetEntityManager extends Net {
 					var componentType:Class<Component> = cast serializableTypes[componentTypeId];
 					var component:Component = Type.createInstance(componentType, []);
 					component.unserialize(connection.input);
+
 					entity.add(component);
 
 				case REMOVE_COMPONENT:
