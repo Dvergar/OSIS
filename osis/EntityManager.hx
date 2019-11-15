@@ -230,6 +230,7 @@ class Entity {
 	@:dox(hide) public var components:Vector<Component> = new Vector(MAX_COMPONENTS);
 	@:dox(hide) public var remComponents:Vector<Bool> = new Vector(MAX_COMPONENTS);
 	@:dox(hide) public var registeredSetsCode:Int64 = 0;
+	public var destroyed = false;
 
 	// NET
 	@:dox(hide) public var templateId:Int;
@@ -480,6 +481,8 @@ class EntityManager {
 		corner cases such as keeping determinism).
 	**/
 	public function destroyEntity(entity:Entity) {
+		entity.destroyed = true;
+
 		for (component in entity.components)
 			if (component != null)
 				_removeComponentInstance(entity, component);
